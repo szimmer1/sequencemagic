@@ -36,19 +36,18 @@ def view():
 def upload():
     form = SQLFORM.factory(
         Field('name', label='Sequence name', required=True),
-        Field('sequence', 'text', requires=IS_NOT_EMPTY()),
-        Field('sequence_file', 'upload'),
+        Field('seqs', 'text', requires=IS_NOT_EMPTY()),
+        #Field('sequence_file', 'upload'),
         Field('description', 'text')
     )
     new_id = None
     row = None
     if form.process().accepted:
         session.flash = T("Your form was accepted")
-        # insert_sequence(form) <-- defined in the
-        row = db.sequences.insert(
-                            seq=form.vars.sequence
-                            )
-        new_id = row.id
+        insert_sequence(form)#<-- defined in the
+        #row = db.sequences.insert(
+        #                    seq=form.vars.sequence
+        #                    )
     else:
         pass
     return locals()

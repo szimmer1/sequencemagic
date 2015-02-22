@@ -13,22 +13,23 @@ def get_first_name():
    return name
    
 def insert_sequence(form):
-   seq_id = db.sequences.insert(seq = form.seq)
+   seq_id = db.sequences.insert(seq = form.vars.seqs)
    desc_id = insert_descriptor_table(form, seq_id)
    # db(db.sequences.id==seq_id).update(descriptor_id = desc_id)
    update_descriptor_to_user(form, desc_id)
 
 def insert_descriptor_table(form, seq_id):
    # updates descriptor_table table with sequence name, description, and id
-   descriptor_id = db.descriptor_table.insert(seq_ID = db(db.sequences.id == seq_id).select(),
-                              sequence_Name = form.name,
-                              sequence_description = form.description,
+   descriptor_id = db.descriptor_table.insert(seq_ID = seq_id,
+                              sequence_Name = form.vars.name,
+                              sequence_description = form.vars.description,
                               date_created = datetime.utcnow()
                              )
    return descriptor_id
    
 def update_descriptor_to_user(form, desc_id):
-   db.descriptor_to_user.insert(user_id = db.auth_user,
+   db.descriptor_to_user.insert(
+   								
                                 descriptor_id = desc_id)
 
 def update_annotation(form):
@@ -68,7 +69,7 @@ db.define_table('descriptor_to_user',
                 Field('descriptor_id', 'reference descriptor_table')
                 )
 
-db.descriptor_to_user.default = auth.user_id
+db.descriptor_to_user.user_id.default = auth.user_id
 
 
 				
