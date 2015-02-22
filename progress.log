@@ -1,1 +1,24 @@
 [2015-02-20 18:51:47] START
+[2015-02-21 17:29:29] CREATE tables.py: 0
+[2015-02-21 21:25:59] EDIT sequencemagic/controllers/default.py: 23
+[2015-02-21 21:26:17] CREATE default/all.html: 0
+[2015-02-21 21:29:22] EDIT sequencemagic/views/default/all.html: 7
+[2015-02-21 21:31:07] EDIT sequencemagic/views/default/all.html: 0
+[2015-02-21 21:31:47] EDIT sequencemagic/views/default/all.html: 0
+[2015-02-21 21:32:10] EDIT sequencemagic/controllers/default.py: 0
+[2015-02-21 21:32:30] EDIT sequencemagic/controllers/default.py: 0
+[2015-02-21 21:33:22] EDIT sequencemagic/views/default/all.html: 0
+[2015-02-21 21:33:35] EDIT sequencemagic/views/default/all.html: 0
+[2015-02-21 21:34:30] EDIT sequencemagic/views/default/all.html: 0
+[2015-02-21 21:36:14] EDIT sequencemagic/controllers/default.py: 0
+[2015-02-21 21:38:17] EDIT sequencemagic/controllers/default.py: 0
+[2015-02-21 21:38:49] EDIT sequencemagic/controllers/default.py: 0
+[2015-02-21 21:39:19] EDIT sequencemagic/controllers/default.py: 0
+[2015-02-21 21:40:33] EDIT sequencemagic/controllers/default.py: 0
+[2015-02-21 21:40:58] EDIT sequencemagic/controllers/default.py: 0
+[2015-02-21 21:41:10] EDIT sequencemagic/views/default/all.html: 0
+[2015-02-21 21:42:15] EDIT sequencemagic/controllers/default.py: 0
+[2015-02-21 21:42:39] EDIT sequencemagic/controllers/default.py: 0
+[2015-02-21 21:51:18] EDIT sequencemagic/controllers/default.py: -1
+[2015-02-21 21:51:20] EDIT sequencemagic/views/default/index.html: 0
+[2015-02-21 21:51:22] EDIT sequencemagic/views/default/all.html: 0

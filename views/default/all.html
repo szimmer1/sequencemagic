@@ -1,0 +1,10 @@
+{{extend 'layout.html'}}
+{{if seqList is '':}}
+<h2>Make a sequence first</h2>
+{{else:}}
+<h2>Sequences:</h2>
+<ul>
+   {{for seq in seqList:}}
+   <li>{{=seq}}
+   {{pass}}
+{{pass}}
