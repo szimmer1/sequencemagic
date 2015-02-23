@@ -10,23 +10,11 @@
 #########################################################################
 
 def index():
-    """
-    example action using the internationalization operator T and flash
-    rendered by views/default/index.html or views/generic.html
-
-    if you need a simple wiki simply replace the two lines below with:
-    return auth.wiki()
-    """
-    response.flash = T("Welcome to sequencemagic!")
-    return dict(message=T('Hello World'))
-
-@auth.requires_login()
-def all():
    """Allows a user to view all sequences upon login"""
-   seqList = db(db.descriptor_table.user_id == auth.user).select(orderby=db.descriptor_table.seqID)
+   seqList = db(db.descriptor_table.user_id == auth.user.id).select(orderby=db.descriptor_table.seqID)
    if seqList is None:
       session.flash = T("You have no sequences!")
-   return dict(seqList = seqList)
+   return dict(seqList = seqList, user = auth.user)
 
 def view():
    """
@@ -43,6 +31,9 @@ def view():
    seq = db(db.sequences.descriptor_id == seqID).select().seq
    annotationList = db(db.annotations.descriptor_id == seqID).select().annotation_name
    return dict(seq = seq, annotationList = annotationList)
+
+def upload():
+
 
 def user():
     """
