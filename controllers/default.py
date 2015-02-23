@@ -23,7 +23,7 @@ def index():
 @auth.requires_login()
 def all():
    """Allows a user to view all sequences upon login"""
-   seqList = db(db.descriptor_table.user_id == auth.user).select(orderby=db.descriptor_table.seqID)
+   seqList = db(db.descriptor_to_user.user_id == auth.user).select(orderby=db.descriptor_table.seq_ID)
    if seqList is None:
       session.flash = T("You have no sequences!")
    return dict(seqList = seqList)
