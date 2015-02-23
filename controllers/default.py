@@ -11,7 +11,7 @@
 
 def index():
    """Allows a user to view all sequences upon login"""
-   seqList = db(db.descriptor_table.user_id == auth.user.id).select(orderby=db.descriptor_table.seqID)
+   seqList = db(db.descriptor_table.user_id == auth.user_id).select(orderby=db.descriptor_table.seqID)
    if seqList is None:
       session.flash = T("You have no sequences!")
    return dict(seqList = seqList, user = auth.user)
@@ -32,8 +32,26 @@ def view():
    annotationList = db(db.annotations.descriptor_id == seqID).select().annotation_name
    return dict(seq = seq, annotationList = annotationList)
 
+@auth.requires_login()
 def upload():
-
+    form = SQLFORM.factory(
+        Field('name', label='Sequence name', required=True),
+        Field('sequence', 'text', requires=IS_NOT_EMPTY()),
+        Field('sequence_file', 'upload'),
+        Field('description', 'text')
+    )
+    new_id = None
+    row = None
+    if form.process().accepted:
+        session.flash = T("Your form was accepted")
+        # insert_sequence(form) <-- defined in the
+        row = db.sequences.insert(
+                            seq=form.vars.sequence
+                            )
+        new_id = row.id
+    else:
+        pass
+    return locals()
 
 def user():
     """

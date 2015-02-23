@@ -1,5 +1,6 @@
 {{extend 'layout.html'}}
-{{if seqList is '':}}
+{{=user}}
+{{if seqList is None:}}
 <h2>Make a sequence first</h2>
 {{else:}}
 <h2>Sequences:</h2>
