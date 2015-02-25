@@ -4,11 +4,11 @@
     <div class="row">
         <div class="col-md-12">
             <h1>SequenceMagic</h1>
-            {{=A('Upload a sequence', _href=URL('default', 'upload'))}}
+            {{=A('Upload a sequence', _class="btn btn-primary", _href=URL('default', 'upload'))}}
         </div>
     </div>
 </div>
-
+<hr>
 <div class="container">
     <div class="row">
         {{for descriptor in all_descriptors:}}
@@ -18,7 +18,7 @@
                     <h3>{{=descriptor.sequence_name}}</h3>
                     <p>{{=descriptor.sequence_description}}</p>
                     <p>
-                        {{=A('View', _href=URL('default', 'view', args=[descriptor.id]))}}
+                        {{=A('View', _class="btn btn-primary", _href=URL('default', 'view', args=[descriptor.id]))}}
                     </p>
                 </div>
             </div>
