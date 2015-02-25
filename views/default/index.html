@@ -1,3 +1,28 @@
 {{extend 'layout.html'}}
 
-<h1>You're running SequenceMagic</h1>
+<div class="container">
+    <div class="row">
+        <div class="col-md-12">
+            <h1>SequenceMagic</h1>
+            {{=A('Upload a sequence', _href=URL('default', 'upload'))}}
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <div class="row">
+        {{for descriptor in all_descriptors:}}
+        <div class="col-md-3">
+            <div class="thumbnail">
+                <div class="caption">
+                    <h3>{{=descriptor.sequence_name}}</h3>
+                    <p>{{=descriptor.sequence_description}}</p>
+                    <p>
+                        {{=A('View', _href=URL('default', 'view', args=[descriptor.id]))}}
+                    </p>
+                </div>
+            </div>
+        </div>
+        {{pass}}
+    </div>
+</div>

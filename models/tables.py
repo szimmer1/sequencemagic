@@ -17,11 +17,12 @@ def insert_sequence(form):
    desc_id = insert_descriptor_table(form, seq_id)
    # db(db.sequences.id==seq_id).update(descriptor_id = desc_id)
    update_descriptor_to_user(form, desc_id)
+   return desc_id
 
 def insert_descriptor_table(form, seq_id):
    # updates descriptor_table table with sequence name, description, and id
-   descriptor_id = db.descriptor_table.insert(seq_ID = seq_id,
-                              sequence_Name = form.vars.name,
+   descriptor_id = db.descriptor_table.insert(seq_id = seq_id,
+                              sequence_name = form.vars.name,
                               sequence_description = form.vars.description,
                               date_created = datetime.utcnow()
                              )
@@ -57,11 +58,14 @@ a specific user. A user may have many different sequences, with
 many different annotations per sequence.
 """
 db.define_table('descriptor_table',
-                Field('seq_ID', 'reference sequences'),
-                Field('sequence_Name'),
-                Field('sequence_description' , 'text'),
+                Field('seq_id', 'reference sequences'),
+                Field('sequence_name'),
+                Field('sequence_description', 'text'),
+                Field('creating_user_id', 'reference auth_user'),
                 Field('date_created', 'datetime')
 				   )
+
+db.descriptor_table.creating_user_id.default = auth.user_id
 
 """Linker table for descriptors and users"""
 db.define_table('descriptor_to_user',

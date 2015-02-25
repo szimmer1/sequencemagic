@@ -11,26 +11,44 @@
 
 def index():
    """Allows a user to view all sequences upon login"""
-   seqList = db(db.descriptor_to_user.user_id == auth.user).select(orderby=db.descriptor_table.seq_ID)
-   if seqList is None:
+   user = all_descriptors = None
+
+   # seqList = db(db.descriptor_to_user.user_id == auth.user_id).select(orderby=db.descriptor_table.seq_id)
+   user = auth.user
+   all_descriptors = db().select(db.descriptor_table.ALL) # For now, return all descriptors in the DB
+   if all_descriptors is None:
       session.flash = T("You have no sequences!")
-   return dict(seqList = seqList, user = auth.user)
+   return locals()
 
 def view():
    """
    Allows a user to visualize a particular sequence with it's annotations,
    if any are present. Requires seq they want to see to be passed via URL,
-   as in sequencemagic/view/seqID
+   as in sequencemagic/view/:descriptor_id
    """
-   s = request.args(0) or 'None'
-   annotationList = seq = ''
-   seqID = db(db.descriptor_table.seqID == s).select().first()
-   if seqID is 'None':
-      # sequence does not exist
-      return dict(seq = seq, annotationList = annotationList)
-   seq = db(db.sequences.descriptor_id == seqID).select().seq
-   annotationList = db(db.annotations.descriptor_id == seqID).select().annotation_name
-   return dict(seq = seq, annotationList = annotationList)
+   annotationList = seq = desc_name = desc_description = date_created = desc_author = None
+
+   desc_id = request.args(0) or None
+   if desc_id is None:
+       # no descriptor id given
+       return locals()
+
+   desc_row = db(db.descriptor_table.id == desc_id).select().first()
+   user_row = db(db.auth_user.id == desc_row.creating_user_id).select().first()
+
+   desc_author = user_row.first_name + " " + user_row.last_name
+   desc_name = desc_row.sequence_name
+   desc_description = desc_row.sequence_description
+   date_created = desc_row.date_created
+   seq_id = desc_row.seq_id
+
+   seq = db(db.sequences.id == seq_id).select().first().seq
+   if seq_id is None or seq is None:
+       # sequence doesn't exist
+       return locals()
+
+   # annotationList = db(db.annotations.descriptor_id == seqID).select().annotation_name
+   return locals()
 
 @auth.requires_login()
 def upload():
@@ -40,14 +58,11 @@ def upload():
         #Field('sequence_file', 'upload'),
         Field('description', 'text')
     )
-    new_id = None
-    row = None
+
     if form.process().accepted:
         session.flash = T("Your form was accepted")
-        insert_sequence(form)#<-- defined in the
-        #row = db.sequences.insert(
-        #                    seq=form.vars.sequence
-        #                    )
+        descriptor_id = insert_sequence(form) #<-- defined in the models
+        redirect(URL('default', 'view', args=[descriptor_id]))
     else:
         pass
     return locals()

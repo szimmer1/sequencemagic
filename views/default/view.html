@@ -1,0 +1,10 @@
+{{extend 'layout.html'}}
+
+{{if seq is not None:}}
+    <h1>{{=desc_name}} <small>by {{=desc_author}} on {{=date_created.strftime("%m/%d/%y")}}</small></h1>
+    <div class="container">
+        {{=seq}}
+    </div>
+{{else:}}
+    <h1>No descriptor id passed in URI args</h1>
+{{pass}}
