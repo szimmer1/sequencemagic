@@ -1,18 +1,8 @@
 {{extend 'layout.html'}}
 
-<div class="container">
-    <div class="row">
-        <div class="col-md-12">
-            <h1>SequenceMagic</h1>
-            {{=A('Upload a sequence', _class="btn btn-primary", _href=URL('default', 'upload'))}}
-        </div>
-    </div>
-</div>
-<hr>
-<div class="container">
     <div class="row">
         {{for descriptor in all_descriptors:}}
-        <div class="col-md-3">
+        <div class="col-md-4">
             <div class="thumbnail">
                 <div class="caption">
                     <h3>{{=descriptor.sequence_name}}</h3>
@@ -25,4 +15,3 @@
         </div>
         {{pass}}
     </div>
-</div>
