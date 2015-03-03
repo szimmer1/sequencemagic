@@ -76,7 +76,6 @@ db.define_table('descriptor_to_user',
 db.descriptor_to_user.user_id.default = auth.user_id
 
 
-				
 """
 annotations table. This is the list of substrings and their identifier
 sequence.
@@ -93,7 +92,7 @@ db.define_table('annotation_to_descriptor',
                 Field('descriptor_id', 'reference descriptor_table'),
                 Field('annotation_id', 'reference annotations')
                 )
-				 
+
 """Here is a FASTA reader method that we may need in a controller.
 I used this for my BME 160 class so it will probably have to do be modified
 but it doesn't hurt to have as reference

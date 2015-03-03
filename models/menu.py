@@ -28,6 +28,29 @@ DEVELOPMENT_MENU = False
 ## provide shortcuts for development. remove in production
 #########################################################################
 
+"""global response menu, called from default.py"""
+
+def setResponseMenu(ctrl, authorized):
+    ref = [
+        'index',
+        'upload',
+        'myindex'
+    ]
+    menu = [
+        [T('Browse sequences'), False, URL('default', 'index'), []],
+        [T('Upload a sequence'), False, URL('default', 'upload'), []],
+        [T('My sequences'), False, URL('default', 'index', args=[auth.user_id]), []],
+        ]
+    if ctrl is 'myindex':
+        if authorized:
+            menu[ref.index(ctrl)][1] = True
+        else:
+            return menu
+        pass
+    pass
+    menu[ref.index(ctrl)][1] = True
+    return menu
+
 def _():
     # shortcuts
     app = request.application
@@ -132,4 +155,4 @@ def _():
          )]
 if DEVELOPMENT_MENU: _()
 
-if "auth" in locals(): auth.wikimenu() 
+if "auth" in locals(): auth.wikimenu()

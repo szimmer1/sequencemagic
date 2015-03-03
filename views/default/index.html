@@ -9,6 +9,10 @@
                     <p>{{=descriptor.sequence_description}}</p>
                     <p>
                         {{=A('View', _class="btn btn-primary", _href=URL('default', 'view', args=[descriptor.id]))}}
+                        {{if authorized:}}
+                            {{=A('Edit', _class="btn btn-primary", _href="#")}}
+                        {{pass}}
+                        {{=A('Subscribe', _class="btn btn-primary", _href="#")}}
                     </p>
                 </div>
             </div>

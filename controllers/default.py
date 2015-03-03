@@ -9,20 +9,20 @@
 ## - api is an example of Hypermedia API support and access control
 #########################################################################
 
-"""global response menu"""
-response.menu = [
-    [T('My sequences'), True, URL('default', 'index'), []],
-    [T('Upload a sequence'), False, URL('default', 'upload'), []],
-    ]
-
 def index():
    """Set response menu"""
-   for item in response.menu:
-        item[1] = False
-   response.menu[0][1] = True
+   ctrl = 'index'
+   authorized = False
+   if request.args(0) is not None:
+       ctrl = 'myindex'
+       # determine in authorized is true or false
+   response.menu = setResponseMenu(ctrl, authorized)
 
-   """Allows a user to view all sequences upon login"""
+   # TODO: conditional authorization for viewing "My sequences"
+
    user = all_descriptors = None
+
+   """If passed arg (user id), shows only user's sequences (requires auth). Else, shows all sequences"""
 
    # seqList = db(db.descriptor_to_user.user_id == auth.user_id).select(orderby=db.descriptor_table.seq_id)
    user = auth.user
@@ -32,6 +32,9 @@ def index():
    return locals()
 
 def view():
+   """Set response menu"""
+   response.menu = setResponseMenu('view', False)
+
    """
    Allows a user to visualize a particular sequence with it's annotations,
    if any are present. Requires seq they want to see to be passed via URL,
@@ -64,9 +67,7 @@ def view():
 @auth.requires_login()
 def upload():
     """Set response menu"""
-    for item in response.menu:
-        item[1] = False
-    response.menu[1][1] = True
+    response.menu = setResponseMenu('upload', True)
 
     form = SQLFORM.factory(
         Field('name', label='Sequence name', required=True),
