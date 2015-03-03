@@ -9,7 +9,18 @@
 ## - api is an example of Hypermedia API support and access control
 #########################################################################
 
+"""global response menu"""
+response.menu = [
+    [T('My sequences'), True, URL('default', 'index'), []],
+    [T('Upload a sequence'), False, URL('default', 'upload'), []],
+    ]
+
 def index():
+   """Set response menu"""
+   for item in response.menu:
+        item[1] = False
+   response.menu[0][1] = True
+
    """Allows a user to view all sequences upon login"""
    user = all_descriptors = None
 
@@ -52,6 +63,11 @@ def view():
 
 @auth.requires_login()
 def upload():
+    """Set response menu"""
+    for item in response.menu:
+        item[1] = False
+    response.menu[1][1] = True
+
     form = SQLFORM.factory(
         Field('name', label='Sequence name', required=True),
         Field('seqs', 'text', requires=IS_NOT_EMPTY()),

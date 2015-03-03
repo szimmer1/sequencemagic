@@ -110,12 +110,11 @@
         <div class="col-md-3 left-sidebar">
             {{block left_sidebar}}
             <div class="list-group">
-                <a href="{{=URL('default', 'index')}}" class="list-group-item active">
-                    My sequences
-                </a>
-                <a href="{{=URL('default', 'upload')}}" class="list-group-item">
-                    Upload a sequence
-                </a>
+                {{for item in response.menu:}}
+                    <a href={{=item[2]}} class="list-group-item{{if item[1]:}} active{{pass}}">
+                        {{=item[0]}}
+                    </a>
+                {{pass}}
             </div>
             {{end}}
         </div>
