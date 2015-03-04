@@ -1,21 +1,48 @@
 {{extend 'layout.html'}}
 
     <div class="row">
-        {{for descriptor in all_descriptors:}}
-        <div class="col-md-4">
-            <div class="thumbnail">
-                <div class="caption">
-                    <h3>{{=descriptor.sequence_name}}</h3>
-                    <p>{{=descriptor.sequence_description}}</p>
-                    <p>
-                        {{=A('View', _class="btn btn-primary", _href=URL('default', 'view', args=[descriptor.id]))}}
-                        {{if authorized:}}
-                            {{=A('Edit', _class="btn btn-primary", _href="#")}}
-                        {{pass}}
-                        {{=A('Subscribe', _class="btn btn-primary", _href="#")}}
-                    </p>
-                </div>
-            </div>
-        </div>
-        {{pass}}
+        {{if query is not None:}}
+            {{for row in query:}}
+                {{all_descriptors = db(db.descriptor_table.seq_id == row.descriptor_id).select(db.descriptor_table.ALL)}}
+                    {{for descriptor in all_descriptors:}}
+                        <div class="col-md-4">
+                            <div class="thumbnail">
+                                <div class="caption">
+                                    <h3>{{=descriptor.sequence_name}}</h3>
+                                    <p>{{=descriptor.sequence_description}}</p>
+                                    <p>
+                                        {{=A('View', _class="btn btn-primary", _href=URL('default', 'view', args=[descriptor.id]))}}
+                                        {{if authorized:}}
+                                            {{if descriptor.creating_user_id == auth.user_id:}}
+                                                {{=A('Edit', _class="btn btn-primary", _href="#")}}
+                                            {{pass}}
+                                        {{pass}}
+                                   </p>
+                                </div>
+                            </div>
+                        </div>
+                    {{pass}}
+            {{pass}}
+        {{else:}}
+            {{for descriptor in all_descriptors:}}
+                    <div class="col-md-4">
+                        <div class="thumbnail">
+                            <div class="caption">
+                                <h3>{{=descriptor.sequence_name}}</h3>
+                                <p>{{=descriptor.sequence_description}}</p>
+                                <p>
+                                    {{=A('View', _class="btn btn-primary", _href=URL('default', 'view', args=[descriptor.id]))}}
+                                    {{if authorized:}}
+                                        {{=A('Edit', _class="btn btn-primary", _href="#")}}
+                                    {{pass}}
+                                    {{if descriptor.creating_user_id == auth.user_id:}}
+                                                {{=A('Edit', _class="btn btn-primary", _href="#")}}
+                                    {{pass}}
+                                    {{=A('Subscribe', _class="btn btn-primary", _href=URL('default', 'subscribe', args=[descriptor.seq_id]))}}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+            {{pass}}
+        {{pass}}                
     </div>
