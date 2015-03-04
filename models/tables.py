@@ -45,7 +45,7 @@ a user has chosen to enter.
 
 This should be able to accept FASTA files and strip them
 down to plain text. Shouldn't be too big of a deal to
-implement.
+implement.  gttgr
 """
 db.define_table('sequences',
 				Field('seq', 'text'),
