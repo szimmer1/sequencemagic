@@ -69,10 +69,12 @@ def upload():
     """Set response menu"""
     response.menu = setResponseMenu('upload', True)
 
+    categories = ["fasta", "seq"]
     form = SQLFORM.factory(
         Field('name', label='Sequence name', required=True),
         Field('seqs', 'text', requires=IS_NOT_EMPTY()),
-        #Field('sequence_file', 'upload'),
+        Field('File Type', requires=IS_IN_SET(categories)),
+        Field('sequence_file', 'upload'),
         Field('description', 'text')
     )
 
@@ -83,6 +85,36 @@ def upload():
     else:
         pass
     return locals()
+
+
+"""This is just to test the tables and probably not how we should do this"""
+@auth.requires_login()
+def upload_annotation():
+    """Set response menu"""
+    # response.menu = setResponseMenu('multiple', True)
+
+    categories = []
+    for seq in db(db.descriptor_table).select(): #run through seq names
+        """if auth.user.first_name == seq.creating_user_id: #if they match curr users name append them for later
+            categories.append(seq.sequence_name)"""
+        categories.append(seq.sequence_name)
+
+    form = SQLFORM.factory(
+        Field('seq_name', label=' Select A Sequence to Annotate', requires=IS_IN_SET(categories), required=True), # consists of only users own sequences
+        Field('annotation_name', requires=IS_NOT_EMPTY()),
+        Field('annotation_position', 'list:integer'),
+        Field('start_pos'),
+        Field('end_pos'),
+        Field('description', 'text')
+    )
+
+    if form.process().accepted:
+        session.flash = T("Your form was accepted")
+        descriptor_id = insert_annotation(form) #<-- defined in the models
+        redirect(URL('default', 'view', args=[descriptor_id]))
+    else:
+        pass
+    return dict(form=form)
 
 def user():
     """

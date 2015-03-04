@@ -29,16 +29,22 @@ def insert_descriptor_table(form, seq_id):
    return descriptor_id
    
 def update_descriptor_to_user(form, desc_id):
-   db.descriptor_to_user.insert(
-   								
-                                descriptor_id = desc_id)
+   db.descriptor_to_user.insert(descriptor_id = desc_id)
 
-def update_annotation(form):
-   pass
+def insert_annotation(form):
+   annotation_id = db.annotations.insert(annotation_name = form.vars.annotation_name,
+                              annotation_location = form.vars.annotation_position,
+                              annotation_description = form.vars.description,
+                              start_position = form.vars.start_pos,
+                              end_position = form.vars.end_pos
+                              )
+   descriptor_id = db(db.descriptor_table.sequence_name == form.vars.seq_name).select().first().id
+   update_annotation_to_descriptor(annotation_id, descriptor_id)
+   return descriptor_id
 
+def update_annotation_to_descriptor(annotation_id, descriptor_id):
+   db.annotation_to_descriptor.insert(annotation_id = annotation_id, descriptor_id = descriptor_id)
 
-# db.users.name.default = get_first_name()
-# db.users.email.requires = IS_EMAIL()
 """
 sequence table, which contain all the sequences
 a user has chosen to enter.
@@ -49,7 +55,6 @@ implement.
 """
 db.define_table('sequences',
 				Field('seq', 'text'),
-				# Field('descriptor_id' , 'reference descriptor_table'),
 				)
 
 """
@@ -63,7 +68,7 @@ db.define_table('descriptor_table',
                 Field('sequence_description', 'text'),
                 Field('creating_user_id', 'reference auth_user'),
                 Field('date_created', 'datetime')
-				   )
+			)
 
 db.descriptor_table.creating_user_id.default = auth.user_id
 
@@ -84,7 +89,9 @@ db.define_table('annotations',
 				 Field('annotation_name'),
 				 Field('annotation_location' , 'list:integer'),
 				 Field('date_created', 'datetime'),
-				 Field('annotation_description', 'text')
+				 Field('annotation_description', 'text'),
+                       Field('start_position'),
+                       Field('end_position')
 				 )
 
 """Linker table for annotations and descriptors"""
