@@ -1,6 +1,11 @@
 {{extend 'layout.html'}}
 
     <div class="row">
+        <div class="col-md-12">
+            <h1>{{=header_text}}</h1>
+        </div>
+    </div>
+    <div class="row">
         {{if query is not None:}}
             {{for row in query:}}
                 {{all_descriptors = db(db.descriptor_table.seq_id == row.descriptor_id).select(db.descriptor_table.ALL)}}

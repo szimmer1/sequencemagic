@@ -9,14 +9,16 @@
 ## - api is an example of Hypermedia API support and access control
 #########################################################################
 
-
 def index():
+   user = all_descriptors = None
+   header_text = "Latest sequences"
    
    """Set response menu"""
    ctrl = 'index'
    authorized = False
    if request.args(0) is not None:
        ctrl = 'myindex'
+       header_text = "My sequences"
        if request.args(0) != 'None':
            p = db(db.descriptor_table.creating_user_id == request.args(0)).select()
            for row in p:
@@ -24,24 +26,17 @@ def index():
                    authorized = True  
        else:
            session.flash = T("You need to login!")
-    
-   
-       
 
-       
-       # determine in authorized is true or false
    #response.menu = setResponseMenu('index', True)
    response.menu = setResponseMenu(ctrl, authorized)
 
    # TODO: conditional authorization for viewing "My sequences"
 
-   user = all_descriptors = None
-
    """If passed arg (user id), shows only user's sequences (requires auth). Else, shows all sequences"""
 
    # seqList = db(db.descriptor_to_user.user_id == auth.user_id).select(orderby=db.descriptor_table.seq_id)
    user = auth.user
-   all_descriptors = db().select(db.descriptor_table.ALL) # For now, return all descriptors in the DB
+   all_descriptors = db().select(db.descriptor_table.ALL, orderby=~db.descriptor_table.date_created) # For now, return all descriptors in the DB
    query = None
    if authorized: #only showing the sequences you created and that you are subscribed without the edit button
        #all_descriptors = db(db.descriptor_table.creating_user_id == request.args(0)).select(db.descriptor_table.ALL)
