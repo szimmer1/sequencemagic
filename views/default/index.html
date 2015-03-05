@@ -1,6 +1,11 @@
 {{extend 'layout.html'}}
 
     <div class="row">
+        <div class="col-md-12">
+            <h1>{{=header_text}}</h1>
+        </div>
+    </div>
+    <div class="row">
         {{for descriptor in all_descriptors:}}
         <div class="col-md-4">
             <div class="thumbnail">
