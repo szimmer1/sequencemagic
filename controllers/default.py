@@ -26,12 +26,7 @@ def index():
                    authorized = True  
        else:
            session.flash = T("You need to login!")
-    
-   
-       
 
-       
-       # determine in authorized is true or false
    #response.menu = setResponseMenu('index', True)
    response.menu = setResponseMenu(ctrl, authorized)
 

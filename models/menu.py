@@ -44,12 +44,10 @@ def setResponseMenu(ctrl, authorized):
         ]
     if ctrl is 'myindex':
         if authorized:
-            menu[0][1] = True
+            menu[2][1] = True
         else:
             return menu
-        pass
-    pass
-    if len(menu) > ref.index(ctrl):
+    elif len(menu) > ref.index(ctrl):
         menu[ref.index(ctrl)][1] = True
     pass
     return menu
