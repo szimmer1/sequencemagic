@@ -74,7 +74,7 @@ db.descriptor_table.creating_user_id.default = auth.user_id
 """Linker table for descriptors and users"""
 db.define_table('descriptor_to_user',
                 Field('user_id', db.auth_user),
-                Field('descriptor_id', 'reference sequences')
+                Field('descriptor_id', 'reference descriptor_table')
                 )
 
 db.descriptor_to_user.user_id.default = auth.user_id

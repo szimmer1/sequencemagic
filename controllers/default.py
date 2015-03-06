@@ -52,9 +52,12 @@ def index():
 
 @auth.requires_login()
 def subscribe():
-    update_descriptor_to_user(request.args(0))
-    redirect(URL('default', 'index'))    
+    checking = db((db.descriptor_to_user.descriptor_id == request.args(0)) & (db.descriptor_to_user.user_id == auth.user_id)).select(db.descriptor_to_user.ALL)
+    if not checking:
+        update_descriptor_to_user(request.args(0))   
     
+    
+    redirect(URL('default', 'index'))    
 
 @auth.requires_login()
 def edit():
@@ -122,7 +125,6 @@ def upload():
         session.flash = T("Your form was accepted")
         insert = insert_sequence(form)
         descriptor_id = insert['desc_id'] #<-- defined in the models
-        update_descriptor_to_user(insert['seq_id'])
         redirect(URL('default', 'index'))
         
      #redirect(URL('default', 'view', vars=dict(sequenceid=seq_id))
