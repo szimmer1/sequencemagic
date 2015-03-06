@@ -2276,3 +2276,37 @@ success!
 success!
 success!
 success!
+success!
+success!
+success!
+success!
+success!
+success!
+success!
+success!
+success!
+success!
+success!
+success!
+timestamp: 2015-03-06T06:25:33.143554
+ALTER TABLE sequences ADD seq_file_type TEXT;
+timestamp: 2015-03-06T06:25:33.280111
+ALTER TABLE sequences ADD seq_file_name TEXT;
+success!
+success!
+success!
+success!
+success!
+success!
+success!
+success!
+success!
+success!
+success!
+success!
+success!
+success!
+success!
+success!
+success!
+success!
