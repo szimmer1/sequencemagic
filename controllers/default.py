@@ -10,31 +10,73 @@
 #########################################################################
 
 def index():
+   user = all_descriptors = None
+   header_text = "Latest sequences"
+   
    """Set response menu"""
    ctrl = 'index'
    authorized = False
    if request.args(0) is not None:
        ctrl = 'myindex'
-       # determine in authorized is true or false
+       header_text = "My sequences"
+       if request.args(0) != 'None':
+           p = db(db.descriptor_table.creating_user_id == request.args(0)).select()
+           for row in p:
+               if row.creating_user_id == auth.user_id:
+                   authorized = True  
+       else:
+           session.flash = T("You need to login!")
+
+   #response.menu = setResponseMenu('index', True)
    response.menu = setResponseMenu(ctrl, authorized)
 
    # TODO: conditional authorization for viewing "My sequences"
-
-   user = all_descriptors = None
 
    """If passed arg (user id), shows only user's sequences (requires auth). Else, shows all sequences"""
 
    # seqList = db(db.descriptor_to_user.user_id == auth.user_id).select(orderby=db.descriptor_table.seq_id)
    user = auth.user
-   all_descriptors = db().select(db.descriptor_table.ALL) # For now, return all descriptors in the DB
+   all_descriptors = db().select(db.descriptor_table.ALL, orderby=~db.descriptor_table.date_created) # For now, return all descriptors in the DB
+   query = None
+   if authorized: #only showing the sequences you created and that you are subscribed without the edit button
+       #all_descriptors = db(db.descriptor_table.creating_user_id == request.args(0)).select(db.descriptor_table.ALL)
+       query = db(db.descriptor_to_user.user_id == request.args(0)).select(db.descriptor_to_user.descriptor_id)
+       #query is to get all the sequence_id subscribed to the user_id
+       
    if all_descriptors is None:
       session.flash = T("You have no sequences!")
+   
+  
+   
    return locals()
 
-def view():
-   """Set response menu"""
-   response.menu = setResponseMenu('view', False)
+@auth.requires_login()
+def subscribe():
+    update_descriptor_to_user(request.args(0))
+    redirect(URL('default', 'index'))    
+    
 
+@auth.requires_login()
+def edit():
+    # authorize the user to edit
+    authorized = False
+    if request.args(0) is not None:
+       header_text = "You're not authorized to edit this sequence"
+       p = db(db.descriptor_table.id == request.args(0)).select()
+       for row in p:
+          if row.creating_user_id == auth.user_id:
+              authorized = True
+              header_text = row.sequence_name
+          else:
+              session.flash = T("You need to login!")
+    else:
+        redirect(URL('default', 'index'))
+
+    sequence_name = "Test sequence"
+
+    return locals()
+
+def view():
    """
    Allows a user to visualize a particular sequence with it's annotations,
    if any are present. Requires seq they want to see to be passed via URL,
@@ -80,8 +122,13 @@ def upload():
 
     if form.process().accepted:
         session.flash = T("Your form was accepted")
-        descriptor_id = insert_sequence(form) #<-- defined in the models
-        redirect(URL('default', 'view', args=[descriptor_id]))
+        insert = insert_sequence(form)
+        descriptor_id = insert['desc_id'] #<-- defined in the models
+        update_descriptor_to_user(insert['seq_id'])
+        redirect(URL('default', 'index'))
+        
+     #redirect(URL('default', 'view', vars=dict(sequenceid=seq_id))
+        
     else:
         pass
     return locals()
@@ -103,8 +150,6 @@ def upload_annotation():
         Field('seq_name', label=' Select A Sequence to Annotate', requires=IS_IN_SET(categories), required=True), # consists of only users own sequences
         Field('annotation_name', requires=IS_NOT_EMPTY()),
         Field('annotation_position', 'list:integer'),
-        Field('start_pos'),
-        Field('end_pos'),
         Field('description', 'text')
     )
 
