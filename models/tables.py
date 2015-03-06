@@ -31,14 +31,20 @@ def insert_descriptor_table(form, seq_id):
    return descriptor_id
    
 def update_descriptor_to_user(desc_id):
-    
-    db.descriptor_to_user.insert(
-                                
-                                descriptor_id = desc_id)
+   db.descriptor_to_user.insert(descriptor_id = desc_id)
 
-def update_annotation(form):
-   pass
+def insert_annotation(form):
+   annotation_id = db.annotations.insert(annotation_name = form.vars.annotation_name,
+                              annotation_location = form.vars.annotation_position,
+                              date_created = datetime.utcnow(),
+                              annotation_description = form.vars.description,
+                              )
+   descriptor_id = db(db.descriptor_table.sequence_name == form.vars.seq_name).select().first().id
+   update_annotation_to_descriptor(annotation_id, descriptor_id)
+   return descriptor_id
 
+def update_annotation_to_descriptor(annotation_id, descriptor_id):
+   db.annotation_to_descriptor.insert(annotation_id = annotation_id, descriptor_id = descriptor_id)
 
 # db.users.name.default = get_first_name()
 # db.users.email.requires = IS_EMAIL()
@@ -48,13 +54,12 @@ a user has chosen to enter.
 
 This should be able to accept FASTA files and strip them
 down to plain text. Shouldn't be too big of a deal to
-implement.  gttgr
+implement.
 """
 db.define_table('sequences',
-                Field('seq', 'text'),
-                
-                # Field('descriptor_id' , 'reference descriptor_table'),
-                )
+				Field('seq', 'text'),
+				# Field('descriptor_id' , 'reference descriptor_table'),
+				)
 
 """
 descriptor table, which contains all seqID's related to
@@ -67,7 +72,7 @@ db.define_table('descriptor_table',
                 Field('sequence_description', 'text'),
                 Field('creating_user_id', 'reference auth_user'),
                 Field('date_created', 'datetime')
-                   )
+				   )
 
 db.descriptor_table.creating_user_id.default = auth.user_id
 
@@ -85,11 +90,11 @@ annotations table. This is the list of substrings and their identifier
 sequence.
 """
 db.define_table('annotations',
-                 Field('annotation_name'),
-                 Field('annotation_location' , 'list:integer'),
-                 Field('date_created', 'datetime'),
-                 Field('annotation_description', 'text')
-                 )
+				 Field('annotation_name'),
+				 Field('annotation_location' , 'list:integer'),
+				 Field('date_created', 'datetime'),
+				 Field('annotation_description', 'text')
+				 )
 
 """Linker table for annotations and descriptors"""
 db.define_table('annotation_to_descriptor',
