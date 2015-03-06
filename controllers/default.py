@@ -55,12 +55,28 @@ def subscribe():
     update_descriptor_to_user(request.args(0))
     redirect(URL('default', 'index'))    
     
-    
+
+@auth.requires_login()
+def edit():
+    # authorize the user to edit
+    authorized = False
+    if request.args(0) is not None:
+       header_text = "You're not authorized to edit this sequence"
+       p = db(db.descriptor_table.id == request.args(0)).select()
+       for row in p:
+          if row.creating_user_id == auth.user_id:
+              authorized = True
+              header_text = row.sequence_name
+          else:
+              session.flash = T("You need to login!")
+    else:
+        redirect(URL('default', 'index'))
+
+    sequence_name = "Test sequence"
+
+    return locals()
+
 def view():
-   """Set response menu"""
-   
-   response.menu = setResponseMenu('view', False)
-   
    """
    Allows a user to visualize a particular sequence with it's annotations,
    if any are present. Requires seq they want to see to be passed via URL,

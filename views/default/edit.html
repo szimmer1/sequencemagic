@@ -1,0 +1,39 @@
+{{extend 'layout.html'}}
+
+<h1>{{=header_text}}</h1>
+
+{{if authorized:}}
+<script type="text/javascript" src="{{=URL('static', 'js/genoverse.combined.js')}}"></script>
+<div id="genoverse"></div>
+<script>
+    (function($) {
+
+    var genoverseConfig = {
+        container : '#genoverse',
+        width : 1000,
+        genome : '{{=sequence_name}}',
+        tracks : [
+                Genoverse.Track.Scalebar/*,
+                Genoverse.Track.extend({
+                    name       : 'Fasta',
+                    controller : Genoverse.Track.Controller.Sequence,
+                    model      : Genoverse.Track.Model.Sequence.Fasta,
+                    view       : Genoverse.Track.View.Sequence,
+                    url        : '{{=URL('get', 'sequence', vars=dict(seq_id="""somethinghere""",file_type='fasta'))}}',
+                    resizable  : false,
+                    30000      : false
+                })*/
+        ]
+    };
+
+        if ($) {
+            $(document).ready(function() {
+                window.genoverse = new Genoverse(genoverseConfig);
+            })
+        }
+        else {
+            document.addEventListener('DOMContentLoaded', function() { window.genoverse = new Genoverse(genoverseConfig); })
+        }
+    })($)
+</script>
+{{pass}}

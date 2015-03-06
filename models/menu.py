@@ -39,9 +39,11 @@ def setResponseMenu(ctrl, authorized):
     ]
     menu = [
         [T('Browse sequences'), False, URL('default', 'index'), []],
-        [T('Upload a sequence'), False, URL('default', 'upload'), []],
-        [T('My sequences'), False, URL('default', 'index', args=[auth.user_id]), []]
+        [T('Upload a sequence'), False, URL('default', 'upload'), []]
         ]
+    if auth.user is not None:
+        menu.append([T('My sequences'), False, URL('default', 'index', args=[auth.user_id]), []])
+    pass
     if ctrl is 'myindex':
         if authorized:
             menu[2][1] = True
