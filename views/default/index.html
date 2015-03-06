@@ -21,7 +21,7 @@
                                         </a>
                                         {{if authorized:}}
                                             {{if descriptor.creating_user_id == auth.user_id:}}
-                                                <a class="btn btn-primary" href="#">
+                                                <a class="btn btn-primary" href="{{=URL('default', 'edit', args=[descriptor.id])}}">
                                                     Edit&nbsp;&nbsp;<i class="fa fa-magic"></i>
                                                 </a>
                                             {{pass}}
@@ -47,12 +47,12 @@
                                             View&nbsp;&nbsp;<i class="fa fa-eye"></i>
                                     </a>
                                     {{if authorized:}}
-                                        <a class="btn btn-primary" href="#">
+                                        <a class="btn btn-primary" href="{{=URL('default', 'edit', args=[descriptor.id])}}">
                                                     Edit&nbsp;&nbsp;<i class="fa fa-magic"></i>
                                         </a>
                                     {{pass}}
                                     {{if descriptor.creating_user_id == auth.user_id:}}
-                                                <a class="btn btn-primary" href="#">
+                                                <a class="btn btn-primary" href="{{=URL('default', 'edit', args=[descriptor.id])}}">
                                                     Edit&nbsp;&nbsp;<i class="fa fa-magic"></i>
                                                 </a>
                                     {{pass}}

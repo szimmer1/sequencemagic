@@ -49,7 +49,7 @@
 
   {{
   # using sidebars need to know what sidebar you want to use
-  left_sidebar_enabled = globals().get('left_sidebar_enabled',True)
+  left_sidebar_enabled = globals().get('left_sidebar_enabled', not not response.menu)
   right_sidebar_enabled = globals().get('right_sidebar_enabled',False)
   middle_columns = {0:'col-md-12',1:'col-md-9',2:'col-md-6'}[
     (left_sidebar_enabled and 1 or 0)+(right_sidebar_enabled and 1 or 0)]
@@ -61,8 +61,11 @@
   <!-- Bootstrap via CDN -->
   <!--<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap.min.css">-->
   <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css">
-  <link rel="stylesheet" href="/seq/static/css/bootstrap-superhero.css" />
+  <link rel="stylesheet" href="{{=URL('static','css/bootstrap-superhero.css')}}" />
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/js/bootstrap.min.js"></script>
+
+  <!-- Genoverse CSS -->
+  <link rel="stylesheet" href="{{=URL('static','css/genoverse.css')}}" />
 
   <noscript><link href="{{=URL('static', 'css/web2py_bootstrap_nojs.css')}}" rel="stylesheet" type="text/css" /></noscript>
   {{block head}}{{end}}
