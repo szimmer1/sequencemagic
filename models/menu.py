@@ -23,15 +23,37 @@ response.google_analytics_id = None
 ## this is the main application menu add/remove items as required
 #########################################################################
 
-response.menu = [
-    (T('Home'), False, URL('default', 'index'), [])
-]
-
-DEVELOPMENT_MENU = True
+DEVELOPMENT_MENU = False
 
 #########################################################################
 ## provide shortcuts for development. remove in production
 #########################################################################
+
+"""global response menu, called from default.py"""
+
+def setResponseMenu(ctrl, authorized):
+    ref = [
+        'index',
+        'upload',
+        'myindex',
+        'view'
+    ]
+    menu = [
+        [T('Browse sequences'), False, URL('default', 'index'), []],
+        [T('Upload a sequence'), False, URL('default', 'upload'), []]
+        ]
+    if auth.user is not None:
+        menu.append([T('My sequences'), False, URL('default', 'index', args=[auth.user_id]), []])
+    pass
+    if ctrl is 'myindex':
+        if authorized:
+            menu[2][1] = True
+        else:
+            return menu
+    elif len(menu) > ref.index(ctrl):
+        menu[ref.index(ctrl)][1] = True
+    pass
+    return menu
 
 def _():
     # shortcuts
@@ -137,4 +159,4 @@ def _():
          )]
 if DEVELOPMENT_MENU: _()
 
-if "auth" in locals(): auth.wikimenu() 
+if "auth" in locals(): auth.wikimenu()
