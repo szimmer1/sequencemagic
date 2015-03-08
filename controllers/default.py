@@ -163,6 +163,19 @@ def upload_annotation():
         pass
     return dict(form=form)
 
+"""Done just needs tweaking based on UI"""
+def search():
+    search_seq = request.vars.search
+    search_pages = []
+    search_page_ids = []
+    if search_seq is not None:
+        all_pages = db().select(db.descriptor_table.ALL, orderby=db.descriptor_table.sequence_name)
+        for page in all_pages:
+            if (search_seq.lower() in repr(page.sequence_name).lower()):
+                search_page_ids.append(page.id)
+                search_pages.append(page)
+    return dict(search_seq=search_seq, search_pages=search_pages, search_page_ids=search_page_ids)
+
 def user():
     """
     exposes:
