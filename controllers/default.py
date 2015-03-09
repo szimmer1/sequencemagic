@@ -86,7 +86,7 @@ def view():
    as in sequencemagic/view/:descriptor_id
    """
    annotationList = seq = desc_name = desc_description = date_created = desc_author = None
-
+   
    desc_id = request.args(0) or None
    if desc_id is None:
        # no descriptor id given
@@ -94,13 +94,25 @@ def view():
 
    desc_row = db(db.descriptor_table.id == desc_id).select().first()
    user_row = db(db.auth_user.id == desc_row.creating_user_id).select().first()
-
+   
+   
    desc_author = user_row.first_name + " " + user_row.last_name
    desc_name = desc_row.sequence_name
    desc_description = desc_row.sequence_description
    date_created = desc_row.date_created
    seq_id = desc_row.seq_id
-
+   
+   list_of_suscriptors = db((db.descriptor_to_user.descriptor_id == desc_id) & (db.descriptor_to_user.user_id == db.auth_user.id)).select(db.auth_user.first_name, db.auth_user.last_name, db.auth_user.email)
+   """suscriptions_of_user= db((db.descriptor_to_user.user_id==auth.user_id)&(db.descriptor_to_user.descriptor_id==db.descriptor_table.id)&(db.descriptor_table.seq_id == db.sequences.id)).select(db.descriptor_table.ALL)
+   {{if len(suscriptions_of_user) > 0:}}
+                <ul>Im suscribed to :
+                    {{for p_2 in suscriptions_of_user:}}
+                        <li>{{=p_2.sequence_name}}</li>
+                        
+                    {{pass}}
+                </ul>
+            {{pass}} THIS IS THE QUERY AND THE PART TO PUT DIRECTLY IN THE VIEW."""
+   
    seq = db(db.sequences.id == seq_id).select().first().seq
    if seq_id is None or seq is None:
        # sequence doesn't exist
