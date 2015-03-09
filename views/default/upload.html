@@ -1,4 +1,44 @@
 {{extend 'layout.html'}}
 
 <h1>Upload a sequence</h1>
-{{=form}}
+<ul class="btn-group">
+    <li id="form-text" class="btn btn-primary active">Text upload</li>
+    <li id="form-upload" class="btn btn-primary">File upload</li>
+</ul>
+<div id="form-text-wrap" class="form-wrap">
+{{=form_text}}
+</div>
+<div id="form-file-wrap" class="form-wrap">
+{{=form_file}}
+</div>
+
+<script>
+    $(document).ready(function() {
+        function activeHandler(event) {
+            var clicked = $(event.target);
+            // remove other actives
+            clicked.siblings().removeClass("active");
+            // add "active"
+            if (!clicked.hasClass("active")) {
+                clicked.addClass("active")
+            }
+        }
+
+        function showHandler(element) {
+            element.siblings('.form-wrap').hide();
+            element.show()
+        }
+
+        $('#form-text').click(function(event) {
+            debugger;
+            activeHandler(event);
+            showHandler($('#form-text-wrap'));
+        });
+
+        $('#form-upload').click(function(event) {
+            debugger;
+            activeHandler(event);
+            showHandler($('#form-file-wrap'));
+        })
+    })
+</script>
