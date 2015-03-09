@@ -5,6 +5,17 @@
     <div class="container">
         {{=seq}}
     </div>
+    <p>Users suscribed to this sequence: </p>
+			{{if len(list_of_suscriptors) > 0:}}
+				<ul>
+					{{for p in list_of_suscriptors:}}
+						<li>{{=p.first_name}} {{=p.last_name}}, {{=p.email}}</li>
+						
+					{{pass}}
+				</ul>
+			{{pass}}
+			
+			
 {{else:}}
     <h1>No descriptor id passed in URI args</h1>
 {{pass}}

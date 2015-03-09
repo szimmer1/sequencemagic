@@ -86,7 +86,7 @@ def view():
    as in sequencemagic/view/:descriptor_id
    """
    annotationList = seq = desc_name = desc_description = date_created = desc_author = None
-
+   
    desc_id = request.args(0) or None
    if desc_id is None:
        # no descriptor id given
@@ -94,13 +94,25 @@ def view():
 
    desc_row = db(db.descriptor_table.id == desc_id).select().first()
    user_row = db(db.auth_user.id == desc_row.creating_user_id).select().first()
-
+   
+   
    desc_author = user_row.first_name + " " + user_row.last_name
    desc_name = desc_row.sequence_name
    desc_description = desc_row.sequence_description
    date_created = desc_row.date_created
    seq_id = desc_row.seq_id
-
+   
+   list_of_suscriptors = db((db.descriptor_to_user.descriptor_id == desc_id) & (db.descriptor_to_user.user_id == db.auth_user.id)).select(db.auth_user.first_name, db.auth_user.last_name, db.auth_user.email)
+   """suscriptions_of_user= db((db.descriptor_to_user.user_id==auth.user_id)&(db.descriptor_to_user.descriptor_id==db.descriptor_table.id)&(db.descriptor_table.seq_id == db.sequences.id)).select(db.descriptor_table.ALL)
+   {{if len(suscriptions_of_user) > 0:}}
+                <ul>Im suscribed to :
+                    {{for p_2 in suscriptions_of_user:}}
+                        <li>{{=p_2.sequence_name}}</li>
+                        
+                    {{pass}}
+                </ul>
+            {{pass}} THIS IS THE QUERY AND THE PART TO PUT DIRECTLY IN THE VIEW."""
+   
    seq = db(db.sequences.id == seq_id).select().first().seq
    if seq_id is None or seq is None:
        # sequence doesn't exist
@@ -121,7 +133,7 @@ def upload():
         Field('sequence_file', 'upload', uploadfolder ='./applications/sequencemagic/uploads'),
         Field('description', 'text')
     )
-    form.add_button('Enter Sequence Manually', URL('upload', args=['man']))
+    #form.add_button('Enter Sequence Manually', URL('upload', args=['man']))
     
 	#Manual Sequence Entry form
     if request.args(0)=='man':
@@ -130,7 +142,7 @@ def upload():
             Field('seqs', 'text', requires=IS_NOT_EMPTY()),
             Field('description', 'text')
         )
-        form.add_button('Enter Sequence File', URL('upload', args=[]))
+        #form.add_button('Enter Sequence File', URL('upload', args=[]))
 
     if form.process().accepted:
         session.flash = T("Your form was accepted")
@@ -146,7 +158,6 @@ def upload():
             redirect(URL('default', 'index'))
      
 	 #redirect(URL('default', 'view', vars=dict(sequenceid=seq_id))
-        
     else:
         pass
     return locals()
@@ -178,6 +189,19 @@ def upload_annotation():
     else:
         pass
     return dict(form=form)
+
+"""Done just needs tweaking based on UI"""
+def search():
+    search_seq = request.vars.search
+    search_pages = []
+    search_page_ids = []
+    if search_seq is not None:
+        all_pages = db().select(db.descriptor_table.ALL, orderby=db.descriptor_table.sequence_name)
+        for page in all_pages:
+            if (search_seq.lower() in repr(page.sequence_name).lower()):
+                search_page_ids.append(page.id)
+                search_pages.append(page)
+    return dict(search_seq=search_seq, search_pages=search_pages, search_page_ids=search_page_ids)
 
 def user():
     """
