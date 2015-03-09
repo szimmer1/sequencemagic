@@ -13,7 +13,10 @@ def get_first_name():
    return name
    
 def insert_sequence(form):
-   seq_id = db.sequences.insert(seq = form.vars.seqs)
+   if form.vars.seqs is not None:
+      seq_id = db.sequences.insert(seq = form.vars.seqs)
+   elif form.vars.sequence_file is not None:
+      seq_id = db.sequences.insert(file_name = form.vars.sequence_file)
    desc_id = insert_descriptor_table(form, seq_id)
    # db(db.sequences.id==seq_id).update(descriptor_id = desc_id)
    update_descriptor_to_user(desc_id)
@@ -58,6 +61,7 @@ implement.
 """
 db.define_table('sequences',
 				Field('seq', 'text'),
+                Field('file_name', 'text')
 				# Field('descriptor_id' , 'reference descriptor_table'),
 				)
 
