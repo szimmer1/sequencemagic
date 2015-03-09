@@ -117,7 +117,6 @@ def upload():
     categories = ["FASTA", "Plain Sequence"]
     form = SQLFORM.factory(
         Field('name', label='Sequence name', required=True),
-        #Field('seqs', 'text', requires=IS_NOT_EMPTY()),
         Field('file_type', label = "File Type", requires=IS_IN_SET(categories)),
         Field('sequence_file', 'upload', uploadfolder ='./applications/sequencemagic/uploads'),
         Field('description', 'text')
