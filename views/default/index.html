@@ -6,6 +6,7 @@
         </div>
     </div>
     <div class="row">
+        <p>{{=FORM(TABLE(TR(TD(INPUT(_name='search', type='search', _placeholder="Search for a sequence")))),_action=URL('default', 'search'),_method='get')}}</p>
         {{if query is not None:}}
             {{for row in query:}}
                 {{all_descriptors = db(db.descriptor_table.id == row.descriptor_id).select(db.descriptor_table.ALL)}}
