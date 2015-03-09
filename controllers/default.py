@@ -127,20 +127,32 @@ def upload():
     response.menu = setResponseMenu('upload', True)
 
     categories = ["fasta", "seq"]
-    form = SQLFORM.factory(
-        Field('name', label='Sequence name', required=True),
-        Field('seqs', 'text', requires=IS_NOT_EMPTY()),
-        Field('File Type', requires=IS_IN_SET(categories)),
-        Field('sequence_file', 'upload'),
-        Field('description', 'text')
+    form_text = SQLFORM.factory(
+        Field('name', label='Sequence name', requires=IS_NOT_EMPTY(error_message="Must have a name")),
+        Field('seqs', 'text', requires=IS_NOT_EMPTY(error_message="Must have a sequence")),
+        Field('description', 'text'),
+        table_name='texts'
+    )
+    form_file = SQLFORM.factory(
+        Field('name', label='Sequence name', required=IS_NOT_EMPTY(error_message="Must have a name")),
+        Field('sequence_file', 'upload', required=IS_UPLOAD_FILENAME(extension='fas', lastdot=True, error_message="FASTA files only"),
+               uploadfolder=request.folder+'static/uploads'),
+        Field('description', 'text'),
+        table_name='files'
     )
 
-    if form.process().accepted:
+    if form_text.process().accepted:
         session.flash = T("Your form was accepted")
-        insert = insert_sequence(form)
+        insert = insert_sequence(form_text)
         descriptor_id = insert['desc_id'] #<-- defined in the models
         redirect(URL('default', 'index'))
-        
+
+    elif form_file.process().accepted:
+        session.flash = T("Your form was accepted")
+        insert = insert_sequence(form_file)
+        descriptor_id = insert['desc_id'] #<-- defined in the models
+        redirect(URL('default', 'index'))
+
      #redirect(URL('default', 'view', vars=dict(sequenceid=seq_id))
         
     else:
