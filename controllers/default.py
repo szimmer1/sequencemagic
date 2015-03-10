@@ -101,6 +101,18 @@ def view():
    date_created = desc_row.date_created
    seq_id = desc_row.seq_id
 
+   list_of_suscriptors = db((db.descriptor_to_user.descriptor_id == desc_id) & (db.descriptor_to_user.user_id == db.auth_user.id)).select(db.auth_user.first_name, db.auth_user.last_name, db.auth_user.email)
+   """suscriptions_of_user= db((db.descriptor_to_user.user_id==auth.user_id)&(db.descriptor_to_user.descriptor_id==db.descriptor_table.id)&(db.descriptor_table.seq_id == db.sequences.id)).select(db.descriptor_table.ALL)
+   {{if len(suscriptions_of_user) > 0:}}
+                 <ul>Im suscribed to :
+                     {{for p_2 in suscriptions_of_user:}}
+                         <li>{{=p_2.sequence_name}}</li>
+
+                     {{pass}}
+                 </ul>
+             {{pass}} THIS IS THE QUERY AND THE PART TO PUT DIRECTLY IN THE VIEW."""
+
+
    seq = db(db.sequences.id == seq_id).select().first().seq
    if seq_id is None or seq is None:
        # sequence doesn't exist
