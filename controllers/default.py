@@ -86,7 +86,7 @@ def view():
    as in sequencemagic/view/:descriptor_id
    """
    annotationList = seq = desc_name = desc_description = date_created = desc_author = None
-
+   
    desc_id = request.args(0) or None
    if desc_id is None:
        # no descriptor id given
@@ -94,25 +94,25 @@ def view():
 
    desc_row = db(db.descriptor_table.id == desc_id).select().first()
    user_row = db(db.auth_user.id == desc_row.creating_user_id).select().first()
-
+   
+   
    desc_author = user_row.first_name + " " + user_row.last_name
    desc_name = desc_row.sequence_name
    desc_description = desc_row.sequence_description
    date_created = desc_row.date_created
    seq_id = desc_row.seq_id
-
+   
    list_of_suscriptors = db((db.descriptor_to_user.descriptor_id == desc_id) & (db.descriptor_to_user.user_id == db.auth_user.id)).select(db.auth_user.first_name, db.auth_user.last_name, db.auth_user.email)
    """suscriptions_of_user= db((db.descriptor_to_user.user_id==auth.user_id)&(db.descriptor_to_user.descriptor_id==db.descriptor_table.id)&(db.descriptor_table.seq_id == db.sequences.id)).select(db.descriptor_table.ALL)
    {{if len(suscriptions_of_user) > 0:}}
-                 <ul>Im suscribed to :
-                     {{for p_2 in suscriptions_of_user:}}
-                         <li>{{=p_2.sequence_name}}</li>
-
-                     {{pass}}
-                 </ul>
-             {{pass}} THIS IS THE QUERY AND THE PART TO PUT DIRECTLY IN THE VIEW."""
-
-
+                <ul>Im suscribed to :
+                    {{for p_2 in suscriptions_of_user:}}
+                        <li>{{=p_2.sequence_name}}</li>
+                        
+                    {{pass}}
+                </ul>
+            {{pass}} THIS IS THE QUERY AND THE PART TO PUT DIRECTLY IN THE VIEW."""
+   
    seq = db(db.sequences.id == seq_id).select().first().seq
    if seq_id is None or seq is None:
        # sequence doesn't exist
@@ -126,35 +126,38 @@ def upload():
     """Set response menu"""
     response.menu = setResponseMenu('upload', True)
 
-    categories = ["fasta", "seq"]
-    form_text = SQLFORM.factory(
-        Field('name', label='Sequence name', requires=IS_NOT_EMPTY(error_message="Must have a name")),
-        Field('seqs', 'text', requires=IS_NOT_EMPTY(error_message="Must have a sequence")),
-        Field('description', 'text'),
-        table_name='texts'
+    categories = ["FASTA", "Plain Sequence"]
+    form = SQLFORM.factory(
+        Field('name', label='Sequence name', required=True),
+        Field('file_type', label = "File Type", requires=IS_IN_SET(categories)),
+        Field('sequence_file', 'upload', uploadfolder ='./applications/sequencemagic/uploads'),
+        Field('description', 'text')
     )
-    form_file = SQLFORM.factory(
-        Field('name', label='Sequence name', required=IS_NOT_EMPTY(error_message="Must have a name")),
-        Field('sequence_file', 'upload', required=IS_UPLOAD_FILENAME(extension='fas', lastdot=True, error_message="FASTA files only"),
-               uploadfolder=request.folder+'static/uploads'),
-        Field('description', 'text'),
-        table_name='files'
-    )
+    #form.add_button('Enter Sequence Manually', URL('upload', args=['man']))
+    
+	#Manual Sequence Entry form
+    if request.args(0)=='man':
+        form = SQLFORM.factory(
+            Field('name', label = 'Sequence name', required = True),
+            Field('seqs', 'text', requires=IS_NOT_EMPTY()),
+            Field('description', 'text')
+        )
+        #form.add_button('Enter Sequence File', URL('upload', args=[]))
 
-    if form_text.process().accepted:
+    if form.process().accepted:
         session.flash = T("Your form was accepted")
-        insert = insert_sequence(form_text)
-        descriptor_id = insert['desc_id'] #<-- defined in the models
-        redirect(URL('default', 'index'))
-
-    elif form_file.process().accepted:
-        session.flash = T("Your form was accepted")
-        insert = insert_sequence(form_file)
-        descriptor_id = insert['desc_id'] #<-- defined in the models
-        redirect(URL('default', 'index'))
-
-     #redirect(URL('default', 'view', vars=dict(sequenceid=seq_id))
-        
+        if request.args(0)=='man':
+            insert = insert_man_sequence(form)
+            descriptor_id = insert['desc_id'] #<-- defined in the models
+            update_descriptor_to_user(insert['seq_id'])
+            redirect(URL('default', 'index'))
+     	else: 
+            insert = insert_file_sequence(form)
+            descriptor_id = insert['desc_id'] #<-- defined in the models
+            update_descriptor_to_user(insert['seq_id'])
+            redirect(URL('default', 'index'))
+     
+	 #redirect(URL('default', 'view', vars=dict(sequenceid=seq_id))
     else:
         pass
     return locals()
