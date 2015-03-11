@@ -127,6 +127,7 @@ def upload():
     response.menu = setResponseMenu('upload', True)
 
     categories = ["FASTA", "Plain Sequence"]
+    file_active = True;
     form = SQLFORM.factory(
         Field('name', label='Sequence name', required=True),
         Field('file_type', label = "File Type", requires=IS_IN_SET(categories)),
@@ -137,6 +138,7 @@ def upload():
     
 	#Manual Sequence Entry form
     if request.args(0)=='man':
+        file_active = False;
         form = SQLFORM.factory(
             Field('name', label = 'Sequence name', required = True),
             Field('seqs', 'text', requires=IS_NOT_EMPTY()),
