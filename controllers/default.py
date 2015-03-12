@@ -294,6 +294,10 @@ def delete():
 		desc_id = request.vars.desc_id
 		annotation_id = request.vars.annotation_id
 		annotations = None
+		#check user permissions
+		if auth.user.id <> db(db.descriptor_table.id==desc_id).select().first().creating_user_id:
+			session.flash=T('Invalid Privileges')
+			redirect(URL('default', 'index'))
 		if desc_id:
 			#delete discriptor_to_user tuples
 			db(db.descriptor_to_user.descriptor_id==desc_id).delete()
@@ -301,14 +305,17 @@ def delete():
 			seq_id=db(db.descriptor_table.id==desc_id).select().first().seq_id
 			seq_file_name=db(db.sequences.id==seq_id).select().first().seq_file_name
 			db(db.sequences.id==seq_id).delete()
-			#remove file in /sequencemagic/uploads/<sequences.seq_file_name>
-			os.remove(request.folder+'/static/uploads/'+seq_file_name)
+			if seq_file_name <> None:
+				#remove file in /sequencemagic/uploads/<sequences.seq_file_name>
+				os.remove(request.folder+'static/uploads/'+seq_file_name)
 			#delete descriptor
 			db(db.descriptor_table.id==desc_id).delete()
 			#delete annotation tuples
 			annotations = db(db.annotation_to_descriptor.descriptor_id==desc_id).select()
 		if annotation_id:
-			annotations = db(db.annotations.id==annotation_id).select()
+			annotations = db(db.annotations.id==annotation_id &
+							 db.annotations.creating_user_id==auth.user.id).select()
+			
 		for item in annotations:
 			annot_id = item.annotation_id
 			db(db.annotations.annotation_id==annot_id).delete()

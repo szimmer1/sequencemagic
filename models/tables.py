@@ -103,7 +103,8 @@ db.define_table('annotations',
 				 Field('annotation_name'),
 				 Field('annotation_location' , 'list:integer'),
 				 Field('date_created', 'datetime'),
-				 Field('annotation_description', 'text')
+				 Field('annotation_description', 'text'),
+				 Field('creating_user_id', 'reference auth_user')
 				 )
 
 """Linker table for annotations and descriptors"""
