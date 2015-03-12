@@ -27,6 +27,9 @@
                                                 </a>
                                             {{pass}}
                                         {{pass}}
+                                        <a class="btn btn-danger" href="{{=URL('default', 'delete', vars=dict(desc_id=descriptor.id))}}">
+                                            <i class="fa fa-trash"></i>
+                                        </a>
                                    </p>
                                 </div>
                             </div>
@@ -57,6 +60,9 @@
                                                     Edit&nbsp;&nbsp;<i class="fa fa-magic"></i>
                                                 </a>
                                     {{pass}}
+                                    <a class="btn btn-danger" href="{{=URL('default', 'delete', vars=dict(desc_id=descriptor.id))}}">
+                                            <i class="fa fa-trash"></i>
+                                    </a>
                                 </p>
                             </div>
                         </div>
