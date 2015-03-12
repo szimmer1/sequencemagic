@@ -85,7 +85,7 @@ def view():
    if any are present. Requires seq they want to see to be passed via URL,
    as in sequencemagic/view/:descriptor_id
    """
-   annotationList = seq = desc_name = desc_description = date_created = desc_author = None
+   annotationList = seq = seq_type = desc_name = desc_description = date_created = desc_author = list_of_suscriptors = None
    
    desc_id = request.args(0) or None
    if desc_id is None:
@@ -93,9 +93,14 @@ def view():
        return locals()
 
    desc_row = db(db.descriptor_table.id == desc_id).select().first()
+
+   if desc_row is None:
+       # descriptor doesn't exist
+       seq = 'Sequence not found for given descriptor ID'
+       return locals()
+
    user_row = db(db.auth_user.id == desc_row.creating_user_id).select().first()
-   
-   
+
    desc_author = user_row.first_name + " " + user_row.last_name
    desc_name = desc_row.sequence_name
    desc_description = desc_row.sequence_description
@@ -103,23 +108,32 @@ def view():
    seq_id = desc_row.seq_id
    
    list_of_suscriptors = db((db.descriptor_to_user.descriptor_id == desc_id) & (db.descriptor_to_user.user_id == db.auth_user.id)).select(db.auth_user.first_name, db.auth_user.last_name, db.auth_user.email)
+   
+   sequence_row = db(db.sequences.id == seq_id).select().first()
+   if sequence_row.seq is not None:
+       seq = sequence_row.seq
+       seq_type = 'text'
+   elif sequence_row.seq_file_name is not None:
+       seq = sequence_row.seq_file_name
+       seq_type = sequence_row.seq_file_type
+
+   if seq is None:
+       # sequence info is corrupted/missing
+       seq = 'Sequence info not found'
+       return locals()
+
+   # annotationList = db(db.annotations.descriptor_id == seqID).select().annotation_name
+   return locals()
+
    """suscriptions_of_user= db((db.descriptor_to_user.user_id==auth.user_id)&(db.descriptor_to_user.descriptor_id==db.descriptor_table.id)&(db.descriptor_table.seq_id == db.sequences.id)).select(db.descriptor_table.ALL)
    {{if len(suscriptions_of_user) > 0:}}
                 <ul>Im suscribed to :
                     {{for p_2 in suscriptions_of_user:}}
                         <li>{{=p_2.sequence_name}}</li>
-                        
+
                     {{pass}}
                 </ul>
             {{pass}} THIS IS THE QUERY AND THE PART TO PUT DIRECTLY IN THE VIEW."""
-   
-   seq = db(db.sequences.id == seq_id).select().first().seq
-   if seq_id is None or seq is None:
-       # sequence doesn't exist
-       return locals()
-
-   # annotationList = db(db.annotations.descriptor_id == seqID).select().annotation_name
-   return locals()
 
 @auth.requires_login()
 def upload():

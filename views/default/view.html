@@ -1,21 +1,15 @@
 {{extend 'layout.html'}}
 
-{{if seq is not None:}}
-    <h1>{{=desc_name}} <small>by {{=desc_author}} on {{=date_created.strftime("%m/%d/%y")}}</small></h1>
+    <h1>{{=desc_name}} <small>by {{=desc_author}} on {{if date_created is not None:}}{{=date_created.strftime("%m/%d/%y")}}{{pass}}</small></h1>
     <div class="container">
+        Type: {{=seq_type}}<br>
         {{=seq}}
     </div>
     <p>Users suscribed to this sequence: </p>
-			{{if len(list_of_suscriptors) > 0:}}
+			{{if list_of_suscriptors is not None and len(list_of_suscriptors) > 0:}}
 				<ul>
 					{{for p in list_of_suscriptors:}}
 						<li>{{=p.first_name}} {{=p.last_name}}, {{=p.email}}</li>
-						
 					{{pass}}
 				</ul>
 			{{pass}}
-			
-			
-{{else:}}
-    <h1>No descriptor id passed in URI args</h1>
-{{pass}}
