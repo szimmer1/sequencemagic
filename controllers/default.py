@@ -286,6 +286,26 @@ def search():
                 search_pages.append(page)
     return dict(search_seq=search_seq, search_pages=search_pages, search_page_ids=search_page_ids)
 
+
+'''only sequence uploader may delete sequence'''
+def delete_seq(seq_id):
+		#delete discriptor_to_user tuples
+		#delete annotation tuples
+		#delete annotation_to_descriptor tuples
+		#remove file in /sequencemagic/uploads/<sequences.seq_file_name>
+		#delete sequences tuple
+		#delete descriptor
+	return
+
+'''Anyone subscribed to sequence may edit annotations'''
+def delete_annotation(annotation_id):
+		#delete annotations tuple
+		#delete annotation_to_descriptors
+	return
+
+
+
+
 def user():
     """
     exposes:
