@@ -12,6 +12,7 @@
 def index():
    user = all_descriptors = None
    header_text = "Latest sequences"
+   search_seq = ""
    
    """Set response menu"""
    ctrl = 'index'
@@ -55,9 +56,7 @@ def subscribe():
     checking = db((db.descriptor_to_user.descriptor_id == request.args(0)) & (db.descriptor_to_user.user_id == auth.user_id)).select(db.descriptor_to_user.ALL)
     if not checking:
         update_descriptor_to_user(request.args(0))   
-    
-    
-    redirect(URL('default', 'index'))    
+    redirect(URL('default', 'index'))
 
 @auth.requires_login()
 def edit():
@@ -151,12 +150,10 @@ def upload():
         if request.args(0)=='man':
             insert = insert_man_sequence(form)
             descriptor_id = insert['desc_id'] #<-- defined in the models
-            update_descriptor_to_user(insert['seq_id'])
             redirect(URL('default', 'index'))
      	else: 
             insert = insert_file_sequence(form)
             descriptor_id = insert['desc_id'] #<-- defined in the models
-            update_descriptor_to_user(insert['seq_id'])
             redirect(URL('default', 'index'))
      
 	 #redirect(URL('default', 'view', vars=dict(sequenceid=seq_id))
@@ -175,7 +172,8 @@ def upload_annotation():
     for seq in db(db.descriptor_table).select(): #run through seq names
         """if auth.user.first_name == seq.creating_user_id: #if they match curr users name append them for later
             categories.append(seq.sequence_name)"""
-        categories.append(seq.sequence_name)
+        if (seq.creating_user_id == auth.user_id):
+            categories.append(seq.sequence_name)
 
     form = SQLFORM.factory(
         Field('seq_name', label=' Select A Sequence to Annotate', requires=IS_IN_SET(categories), required=True), # consists of only users own sequences

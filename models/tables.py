@@ -40,6 +40,7 @@ def insert_descriptor_table(form, seq_id):
    return descriptor_id
    
 def update_descriptor_to_user(desc_id):
+   #if db.descriptor_to_user.description_id
    db.descriptor_to_user.insert(descriptor_id = desc_id)
 
 def insert_annotation(form):
@@ -55,8 +56,6 @@ def insert_annotation(form):
 def update_annotation_to_descriptor(annotation_id, descriptor_id):
    db.annotation_to_descriptor.insert(annotation_id = annotation_id, descriptor_id = descriptor_id)
 
-# db.users.name.default = get_first_name()
-# db.users.email.requires = IS_EMAIL()
 """
 sequence table, which contain all the sequences
 a user has chosen to enter.

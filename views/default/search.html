@@ -12,6 +12,6 @@
    </ul>
 {{else:}}
    There are no entries related to {{=search_seq}}.
-   {{=A('Would you like to create one?', _href=URL('default', 'edit', args=[search_seq], vars = dict(edit='true')))}}
+   <br>{{=A('Upload your own %s sequence' % search_seq, _href=URL('default', 'upload'))}}
 {{pass}}
 <p>{{=A('Home Page', _class = 'btn', _href=URL('default', 'index'))}}</p>
