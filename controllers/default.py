@@ -295,24 +295,28 @@ def delete():
 		annotations = None
 		if desc_id:
 			#delete discriptor_to_user tuples
-			db(descriptor_to_user.descriptor_id==desc_id).delete()
+			db(db.descriptor_to_user.descriptor_id==desc_id).delete()
 			#delete sequences tuple
-			seq_id = db(descriptor_table.id==desc_id).select().first().seq_id
-			seq_file_name = db(sequences.id==seq_id).select().first().seq_file_name
-			db(sequences.seq_id==seq_id).delete()
+			seq_id=db(db.descriptor_table.id==desc_id).select().first().seq_id
+			seq_file_name=db(db.sequences.id==seq_id).select().first().seq_file_name
+			db(db.sequences.id==seq_id).delete()
 			#remove file in /sequencemagic/uploads/<sequences.seq_file_name>
-			os.remove('./static/uploads/'+seq_file_name)
+			os.remove(request.folder+'/static/uploads/'+seq_file_name)
 			#delete descriptor
-			db(descriptor_table.id==desc_id).delete()
+			db(db.descriptor_table.id==desc_id).delete()
 			#delete annotation tuples
-			annotations = db().select(db.annotation_to_descriptor(descriptor_id==desc_id))
-		if annotatation_id:
-			annotations = db().select(db.annotations.id==annotation_id).select()
+			annotations = db(db.annotation_to_descriptor.descriptor_id==desc_id).select()
+		if annotation_id:
+			annotations = db(db.annotations.id==annotation_id).select()
 		for item in annotations:
 			annot_id = item.annotation_id
-			db(annotations.annotation_id==annot_id).delete()
+			db(db.annotations.annotation_id==annot_id).delete()
 			#delete annotation to descriptor tuples
-			db(annotation_to_descriptor.annotation_id==annot_id).delete()eturn
+			db(db.annotation_to_descriptor.annotation_id==annot_id).delete()
+		
+		redirect (URL('default', 'index'))
+
+		return
 
 '''Anyone subscribed to sequence may edit annotations
 def delete_annotation(annotation_id):
