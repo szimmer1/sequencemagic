@@ -12,6 +12,7 @@
 def index():
    user = all_descriptors = None
    header_text = "Latest sequences"
+   search_seq = ""
    
    """Set response menu"""
    ctrl = 'index'
@@ -55,9 +56,7 @@ def subscribe():
     checking = db((db.descriptor_to_user.descriptor_id == request.args(0)) & (db.descriptor_to_user.user_id == auth.user_id)).select(db.descriptor_to_user.ALL)
     if not checking:
         update_descriptor_to_user(request.args(0))   
-    
-    
-    redirect(URL('default', 'index'))    
+    redirect(URL('default', 'index'))
 
 @auth.requires_login()
 def edit():
@@ -126,35 +125,38 @@ def upload():
     """Set response menu"""
     response.menu = setResponseMenu('upload', True)
 
-    categories = ["fasta", "seq"]
-    form_text = SQLFORM.factory(
-        Field('name', label='Sequence name', requires=IS_NOT_EMPTY(error_message="Must have a name")),
-        Field('seqs', 'text', requires=IS_NOT_EMPTY(error_message="Must have a sequence")),
-        Field('description', 'text'),
-        table_name='texts'
+    categories = ["FASTA", "Plain Sequence"]
+    file_active = True;
+    form = SQLFORM.factory(
+        Field('name', label='Sequence name', required=True),
+        Field('file_type', label = "File Type", requires=IS_IN_SET(categories)),
+        Field('sequence_file', 'upload', uploadfolder ='./applications/sequencemagic/uploads'),
+        Field('description', 'text')
     )
-    form_file = SQLFORM.factory(
-        Field('name', label='Sequence name', required=IS_NOT_EMPTY(error_message="Must have a name")),
-        Field('sequence_file', 'upload', required=IS_UPLOAD_FILENAME(extension='fas', lastdot=True, error_message="FASTA files only"),
-               uploadfolder=request.folder+'static/uploads'),
-        Field('description', 'text'),
-        table_name='files'
-    )
+    #form.add_button('Enter Sequence Manually', URL('upload', args=['man']))
+    
+	#Manual Sequence Entry form
+    if request.args(0)=='man':
+        file_active = False;
+        form = SQLFORM.factory(
+            Field('name', label = 'Sequence name', required = True),
+            Field('seqs', 'text', requires=IS_NOT_EMPTY()),
+            Field('description', 'text')
+        )
+        #form.add_button('Enter Sequence File', URL('upload', args=[]))
 
-    if form_text.process().accepted:
+    if form.process().accepted:
         session.flash = T("Your form was accepted")
-        insert = insert_sequence(form_text)
-        descriptor_id = insert['desc_id'] #<-- defined in the models
-        redirect(URL('default', 'index'))
-
-    elif form_file.process().accepted:
-        session.flash = T("Your form was accepted")
-        insert = insert_sequence(form_file)
-        descriptor_id = insert['desc_id'] #<-- defined in the models
-        redirect(URL('default', 'index'))
-
-     #redirect(URL('default', 'view', vars=dict(sequenceid=seq_id))
-        
+        if request.args(0)=='man':
+            insert = insert_man_sequence(form)
+            descriptor_id = insert['desc_id'] #<-- defined in the models
+            redirect(URL('default', 'index'))
+     	else: 
+            insert = insert_file_sequence(form)
+            descriptor_id = insert['desc_id'] #<-- defined in the models
+            redirect(URL('default', 'index'))
+     
+	 #redirect(URL('default', 'view', vars=dict(sequenceid=seq_id))
     else:
         pass
     return locals()
@@ -170,7 +172,8 @@ def upload_annotation():
     for seq in db(db.descriptor_table).select(): #run through seq names
         """if auth.user.first_name == seq.creating_user_id: #if they match curr users name append them for later
             categories.append(seq.sequence_name)"""
-        categories.append(seq.sequence_name)
+        if (seq.creating_user_id == auth.user_id):
+            categories.append(seq.sequence_name)
 
     form = SQLFORM.factory(
         Field('seq_name', label=' Select A Sequence to Annotate', requires=IS_IN_SET(categories), required=True), # consists of only users own sequences

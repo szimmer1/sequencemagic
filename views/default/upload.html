@@ -2,43 +2,13 @@
 
 <h1>Upload a sequence</h1>
 <ul class="btn-group">
-    <li id="form-text" class="btn btn-primary active">Text upload</li>
-    <li id="form-upload" class="btn btn-primary">File upload</li>
+    <a href="{{=URL('default', 'upload')}}">
+        <li id="form-upload" class="btn btn-primary {{if file_active:}}active{{pass}}">File upload</li>
+    </a>
+    <a href="{{=URL('default', 'upload', args=['man'])}}">
+        <li id="form-text" class="btn btn-primary {{if not file_active:}}active{{pass}}">Text upload</li>
+    </a>
 </ul>
-<div id="form-text-wrap" class="form-wrap">
-{{=form_text}}
+<div id="form-wrap" class="form-wrap">
+{{=form}}
 </div>
-<div id="form-file-wrap" class="form-wrap" style="display: none;">
-{{=form_file}}
-</div>
-
-<script>
-    $(document).ready(function() {
-        function activeHandler(event) {
-            var clicked = $(event.target);
-            // remove other actives
-            clicked.siblings().removeClass("active");
-            // add "active"
-            if (!clicked.hasClass("active")) {
-                clicked.addClass("active")
-            }
-        }
-
-        function showHandler(element) {
-            element.siblings('.form-wrap').hide();
-            element.show()
-        }
-
-        $('#form-text').click(function(event) {
-            debugger;
-            activeHandler(event);
-            showHandler($('#form-text-wrap'));
-        });
-
-        $('#form-upload').click(function(event) {
-            debugger;
-            activeHandler(event);
-            showHandler($('#form-file-wrap'));
-        })
-    })
-</script>

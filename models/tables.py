@@ -12,16 +12,22 @@ def get_first_name():
       name = auth.user.first_name
    return name
    
-def insert_sequence(form):
-   if form.vars.seqs is not None:
-      seq_id = db.sequences.insert(seq = form.vars.seqs)
-   elif form.vars.sequence_file is not None:
-      seq_id = db.sequences.insert(file_name = form.vars.sequence_file)
+def insert_man_sequence(form):
+   seq_id = db.sequences.insert(seq = form.vars.seqs)
    desc_id = insert_descriptor_table(form, seq_id)
-   # db(db.sequences.id==seq_id).update(descriptor_id = desc_id)
    update_descriptor_to_user(desc_id)
-   #redirect(URL('default', 'view', vars=dict(sequenceid=seq_id))
    return dict(desc_id=desc_id, seq_id=seq_id)
+
+def insert_file_sequence(form):
+   seq_id = db.sequences.insert(
+                     seq_file_name = form.vars.sequence_file, 
+                     seq_file_type = form.vars.file_type
+                     )
+   desc_id = insert_descriptor_table(form, seq_id)
+   update_descriptor_to_user(desc_id)
+   return dict(desc_id = desc_id, seq_id=seq_id)
+
+
 
 def insert_descriptor_table(form, seq_id):
    # updates descriptor_table table with sequence name, description, and id
@@ -34,6 +40,7 @@ def insert_descriptor_table(form, seq_id):
    return descriptor_id
    
 def update_descriptor_to_user(desc_id):
+   #if db.descriptor_to_user.description_id
    db.descriptor_to_user.insert(descriptor_id = desc_id)
 
 def insert_annotation(form):
@@ -49,8 +56,6 @@ def insert_annotation(form):
 def update_annotation_to_descriptor(annotation_id, descriptor_id):
    db.annotation_to_descriptor.insert(annotation_id = annotation_id, descriptor_id = descriptor_id)
 
-# db.users.name.default = get_first_name()
-# db.users.email.requires = IS_EMAIL()
 """
 sequence table, which contain all the sequences
 a user has chosen to enter.
@@ -61,7 +66,8 @@ implement.
 """
 db.define_table('sequences',
 				Field('seq', 'text'),
-                Field('file_name', 'text')
+				Field('seq_file_name', 'text'),
+				Field('seq_file_type', 'text')
 				# Field('descriptor_id' , 'reference descriptor_table'),
 				)
 

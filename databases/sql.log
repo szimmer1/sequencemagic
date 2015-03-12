@@ -1,4 +1,4 @@
-timestamp: 2015-02-21T17:23:33.452520
+timestamp: 2015-03-09T13:36:32.385316
 CREATE TABLE auth_user(
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     first_name CHAR(128),
@@ -10,21 +10,21 @@ CREATE TABLE auth_user(
     registration_id CHAR(512)
 );
 success!
-timestamp: 2015-02-21T17:23:33.456679
+timestamp: 2015-03-09T13:36:32.517980
 CREATE TABLE auth_group(
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     role CHAR(512),
     description TEXT
 );
 success!
-timestamp: 2015-02-21T17:23:33.461126
+timestamp: 2015-03-09T13:36:32.674564
 CREATE TABLE auth_membership(
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER REFERENCES auth_user (id) ON DELETE CASCADE,
     group_id INTEGER REFERENCES auth_group (id) ON DELETE CASCADE
 );
 success!
-timestamp: 2015-02-21T17:23:33.464306
+timestamp: 2015-03-09T13:36:32.807578
 CREATE TABLE auth_permission(
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     group_id INTEGER REFERENCES auth_group (id) ON DELETE CASCADE,
@@ -33,7 +33,7 @@ CREATE TABLE auth_permission(
     record_id INTEGER
 );
 success!
-timestamp: 2015-02-21T17:23:33.467428
+timestamp: 2015-03-09T13:36:32.940930
 CREATE TABLE auth_event(
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     time_stamp TIMESTAMP,
@@ -43,7 +43,7 @@ CREATE TABLE auth_event(
     description TEXT
 );
 success!
-timestamp: 2015-02-21T17:23:33.470945
+timestamp: 2015-03-09T13:36:33.074258
 CREATE TABLE auth_cas(
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER REFERENCES auth_user (id) ON DELETE CASCADE,
@@ -53,95 +53,48 @@ CREATE TABLE auth_cas(
     renew CHAR(1)
 );
 success!
-timestamp: 2015-02-21T20:02:44.890396
-CREATE TABLE users(
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name CHAR(512),
-    user_id INTEGER REFERENCES auth_user (id) ON DELETE CASCADE,
-    email CHAR(512)
-);
-success!
-timestamp: 2015-02-21T20:03:36.595758
-CREATE TABLE descriptor_table(
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    seqID CHAR(512)
-);
-success!
-timestamp: 2015-02-21T20:36:37.115564
+timestamp: 2015-03-09T13:36:33.211353
 CREATE TABLE sequences(
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     seq TEXT,
-    descriptor_id INTEGER REFERENCES descriptor_table (id) ON DELETE CASCADE,
+    seq_file_name TEXT,
+    seq_file_type TEXT
+);
+success!
+timestamp: 2015-03-09T13:36:33.341172
+CREATE TABLE descriptor_table(
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    seq_id INTEGER REFERENCES sequences (id) ON DELETE CASCADE,
+    sequence_name CHAR(512),
+    sequence_description TEXT,
+    creating_user_id INTEGER REFERENCES auth_user (id) ON DELETE CASCADE,
     date_created TIMESTAMP
 );
 success!
-timestamp: 2015-02-21T20:36:55.494930
-CREATE TABLE annotations(
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    annotation_name CHAR(512),
-    annotation_location CHAR(512),
-    descriptor_id INTEGER REFERENCES descriptor_table (id) ON DELETE CASCADE,
-    date_created TIMESTAMP,
-    annotation_description TEXT
-);
-success!
-timestamp: 2015-02-21T21:30:12.643236
-ALTER TABLE descriptor_table ADD user_id INTEGER REFERENCES users (id) ON DELETE CASCADE;
-success!
-success!
-success!
-success!
-success!
-success!
-success!
-success!
-success!
-success!
-success!
-success!
-success!
-success!
-success!
-success!
-success!
-success!
-success!
-success!
-success!
-success!
-success!
-timestamp: 2015-02-22T19:49:00.095595
-ALTER TABLE descriptor_table ADD date_created TIMESTAMP;
-success!
-timestamp: 2015-02-22T19:49:00.104029
+timestamp: 2015-03-09T13:36:33.474377
 CREATE TABLE descriptor_to_user(
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER REFERENCES auth_user (id) ON DELETE CASCADE,
     descriptor_id INTEGER REFERENCES descriptor_table (id) ON DELETE CASCADE
 );
 success!
+timestamp: 2015-03-09T13:36:33.608015
+CREATE TABLE annotations(
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    annotation_name CHAR(512),
+    annotation_location TEXT,
+    date_created TIMESTAMP,
+    annotation_description TEXT
+);
 success!
-success!
-success!
-success!
-success!
-success!
-success!
-success!
-success!
-success!
-timestamp: 2015-02-22T20:37:06.170312
-ALTER TABLE descriptor_table ADD seq_id CHAR(512);
-success!
-success!
-success!
-timestamp: 2015-02-22T20:37:06.226158
+timestamp: 2015-03-09T13:36:33.741452
 CREATE TABLE annotation_to_descriptor(
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     descriptor_id INTEGER REFERENCES descriptor_table (id) ON DELETE CASCADE,
     annotation_id INTEGER REFERENCES annotations (id) ON DELETE CASCADE
 );
 success!
+<<<<<<< HEAD
 success!
 success!
 success!
@@ -2834,3 +2787,5 @@ success!
 success!
 success!
 success!
+=======
+>>>>>>> bae4e751cf7487354c5e91acb63ee2290e9e93bf
