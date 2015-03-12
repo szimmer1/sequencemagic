@@ -12,7 +12,8 @@
         <plasmid id="p1"
                  sequencelength="1000">
             <plasmidtrack id="t1">
-                <tracklabel text="{{=seq}}"
+                <tracklabel id="seq-name"
+                            text="{{=sequence_name}}"></tracklabel>
             </plasmidtrack>
         </plasmid>
 
@@ -27,6 +28,9 @@
     #t1 {
         stroke: 1px solid lightgrey;
         fill: lightgreen;
+    }
+    #seq-name {
+        font-size: 25px;
     }
 </style>
 
