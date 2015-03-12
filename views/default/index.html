@@ -22,14 +22,11 @@
                                         </a>
                                         {{if authorized:}}
                                             {{if descriptor.creating_user_id == auth.user_id:}}
-                                                <a class="btn btn-primary" href="{{=URL('default', 'edit', args=[descriptor.id])}}">
-                                                    Edit&nbsp;&nbsp;<i class="fa fa-magic"></i>
+                                                <a class="btn btn-danger" onclick="return confirm('Are you sure?')" href="{{=URL('default', 'delete', vars=dict(desc_id=descriptor.id))}}">
+                                                    <i class="fa fa-trash"></i>
                                                 </a>
                                             {{pass}}
                                         {{pass}}
-                                        <a class="btn btn-danger" href="{{=URL('default', 'delete', vars=dict(desc_id=descriptor.id))}}">
-                                            <i class="fa fa-trash"></i>
-                                        </a>
                                    </p>
                                 </div>
                             </div>
@@ -50,19 +47,11 @@
                                     <a class="btn btn-primary" href="{{=URL('default', 'view', args=[descriptor.id])}}">
                                             View&nbsp;&nbsp;<i class="fa fa-eye"></i>
                                     </a>
-                                    {{if authorized:}}
-                                        <a class="btn btn-primary" href="{{=URL('default', 'edit', args=[descriptor.id])}}">
-                                                    Edit&nbsp;&nbsp;<i class="fa fa-magic"></i>
-                                        </a>
-                                    {{pass}}
                                     {{if descriptor.creating_user_id == auth.user_id:}}
-                                                <a class="btn btn-primary" href="{{=URL('default', 'edit', args=[descriptor.id])}}">
-                                                    Edit&nbsp;&nbsp;<i class="fa fa-magic"></i>
+                                                <a class="btn btn-danger" onclick="return confirm('Are you sure?')" href="{{=URL('default', 'delete', vars=dict(desc_id=descriptor.id))}}">
+                                                    <i class="fa fa-trash"></i>
                                                 </a>
                                     {{pass}}
-                                    <a class="btn btn-danger" href="{{=URL('default', 'delete', vars=dict(desc_id=descriptor.id))}}">
-                                            <i class="fa fa-trash"></i>
-                                    </a>
                                 </p>
                             </div>
                         </div>
