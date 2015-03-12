@@ -289,6 +289,7 @@ def search():
 
 
 '''only sequence uploader may delete sequence'''
+@auth.requires_login()
 def delete():
 		desc_id = request.vars.desc_id
 		annotation_id = request.vars.annotation_id
