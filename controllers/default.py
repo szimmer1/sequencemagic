@@ -62,19 +62,25 @@ def subscribe():
 def edit():
     # authorize the user to edit
     authorized = False
+    sequence_name = 'Unknown sequence'
     if request.args(0) is not None:
        header_text = "You're not authorized to edit this sequence"
-       p = db(db.descriptor_table.id == request.args(0)).select()
-       for row in p:
-          if row.creating_user_id == auth.user_id:
+       p = db(db.descriptor_table.id == request.args(0)).select().first()
+       if p.creating_user_id == auth.user_id:
               authorized = True
-              header_text = row.sequence_name
-          else:
+              header_text = sequence_name = p.sequence_name
+       else:
               session.flash = T("You need to login!")
     else:
         redirect(URL('default', 'index'))
 
-    sequence_name = "Test sequence"
+    seq_row = file_url = None
+    if authorized:
+        seq_row = db(db.sequences.id == p.seq_id).select().first()
+        if seq_row is not None and seq_row.seq_file_type == 'FASTA':
+            file_url = URL('static', 'uploads', args=[seq_row.seq_file_name], scheme=True, host=True)
+        else:
+            session.flash = T("Couldn't find a sequence for the given descriptor ID")
 
     return locals()
 
@@ -84,7 +90,7 @@ def view():
    if any are present. Requires seq they want to see to be passed via URL,
    as in sequencemagic/view/:descriptor_id
    """
-   annotationList = seq = seq_type = desc_name = desc_description = date_created = desc_author = list_of_suscriptors = None
+   annotationList = sequence_row = seq = seq_type = desc_name = desc_description = date_created = desc_author = list_of_suscriptors = None
    
    desc_id = request.args(0) or None
    if desc_id is None:
@@ -144,7 +150,7 @@ def upload():
     form = SQLFORM.factory(
         Field('name', label='Sequence name', required=True),
         Field('file_type', label = "File Type", requires=IS_IN_SET(categories)),
-        Field('sequence_file', 'upload', uploadfolder ='./applications/sequencemagic/uploads'),
+        Field('sequence_file', 'upload', uploadfolder=request.folder+'/static/uploads'),
         Field('description', 'text')
     )
     #form.add_button('Enter Sequence Manually', URL('upload', args=['man']))

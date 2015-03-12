@@ -1,5 +1,6 @@
 {{extend 'layout.html'}}
 
+{{if sequence_row is not None:}}
     <h1>{{=desc_name}} <small>by {{=desc_author}} on {{if date_created is not None:}}{{=date_created.strftime("%m/%d/%y")}}{{pass}}</small></h1>
     <div class="container">
         Type: {{=seq_type}}<br>
@@ -13,3 +14,6 @@
 					{{pass}}
 				</ul>
 			{{pass}}
+{{else:}}
+        {{=seq}}
+{{pass}}

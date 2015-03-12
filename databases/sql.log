@@ -98,3 +98,9 @@ success!
 success!
 success!
 success!
+DELETE FROM descriptor_table;
+DELETE FROM sqlite_sequence WHERE name='descriptor_table';
+success!
+DELETE FROM descriptor_table;
+DELETE FROM sqlite_sequence WHERE name='descriptor_table';
+success!
