@@ -71,10 +71,11 @@ p22
 sg9
 I00
 sg10
-g20
-ssS'annotation_description'
+S'id'
 p23
-(dp24
+ssS'annotation_description'
+p24
+(dp25
 g4
 I32768
 sg5
@@ -83,10 +84,10 @@ sg6
 I5
 sg7
 S'TEXT'
-p25
+p26
 sg9
 I00
 sg10
 S'text'
-p26
+p27
 ss.
