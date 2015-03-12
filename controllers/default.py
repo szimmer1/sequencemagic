@@ -10,6 +10,7 @@
 #########################################################################
 
 import gluon.contrib.simplejson as json
+import os
 
 def index():
    user = all_descriptors = None
@@ -288,21 +289,37 @@ def search():
 
 
 '''only sequence uploader may delete sequence'''
-def delete_seq(seq_id):
-		#delete discriptor_to_user tuples
-		#delete annotation tuples
-		#delete annotation_to_descriptor tuples
-		#remove file in /sequencemagic/uploads/<sequences.seq_file_name>
-		#delete sequences tuple
-		#delete descriptor
-	return
+def delete():
+		desc_id = request.vars.desc_id
+		annotation_id = request.vars.annotation_id
+		annotations = None
+		if desc_id:
+			#delete discriptor_to_user tuples
+			db(descriptor_to_user.descriptor_id==desc_id).delete()
+			#delete sequences tuple
+			seq_id = db(descriptor_table.id==desc_id).select().first().seq_id
+			seq_file_name = db(sequences.id==seq_id).select().first().seq_file_name
+			db(sequences.seq_id==seq_id).delete()
+			#remove file in /sequencemagic/uploads/<sequences.seq_file_name>
+			os.remove('./static/uploads/'+seq_file_name)
+			#delete descriptor
+			db(descriptor_table.id==desc_id).delete()
+			#delete annotation tuples
+			annotations = db().select(db.annotation_to_descriptor(descriptor_id==desc_id))
+		if annotatation_id:
+			annotations = db().select(db.annotations.id==annotation_id).select()
+		for item in annotations:
+			annot_id = item.annotation_id
+			db(annotations.annotation_id==annot_id).delete()
+			#delete annotation to descriptor tuples
+			db(annotation_to_descriptor.annotation_id==annot_id).delete()eturn
 
-'''Anyone subscribed to sequence may edit annotations'''
+'''Anyone subscribed to sequence may edit annotations
 def delete_annotation(annotation_id):
 		#delete annotations tuple
 		#delete annotation_to_descriptors
 	return
-
+'''
 
 
 
