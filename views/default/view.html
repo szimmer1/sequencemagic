@@ -7,10 +7,10 @@
 
         <!-- bootstrap angular view controller here -->
         <div class="row" ng-controller="ViewController as view">
+            {[view.viewTest]}
             <div class="col-md-6 col-xs-12">
-                <ul class="nav nav-tabs nav-stacked">
-                    <li ng-repeat="user in view.users">
-                        {[view.viewTest]}
+                <ul class="list-group">
+                    <li class="list-group-item" ng-repeat="user in view.users">
                         {[view.initials(user)]}
                     </li>
                 </ul>
