@@ -4,5 +4,4 @@ progress.log
 __init__.pyc
 modules/__init__.pyc
 errors/*
-databases/*
 sessions/*
