@@ -68,6 +68,13 @@
 
   <noscript><link href="{{=URL('static', 'css/web2py_bootstrap_nojs.css')}}" rel="stylesheet" type="text/css" /></noscript>
   {{block head}}{{end}}
+
+    <!-- The javascript ============================================= -->
+  <script src="{{=URL('static','js/bootstrap.min.js')}}"></script>
+  <script src="{{=URL('static','js/web2py_bootstrap.js')}}"></script>
+  <script src="{{=URL('static','js/angular_1.3.12.min.js')}}"></script>
+  <script src="{{=URL('static','js/angularplasmid.directives.js')}}"></script>
+  <script src="{{=URL('static','js/angularplasmid.services.js')}}"></script>
 </head>
 
 <body>
@@ -128,7 +135,8 @@
         </div>
         {{pass}}
 
-        <div class="{{=middle_columns}}">
+        <!-- bootstrap the angular app here -->
+        <div class="{{=middle_columns}}" ng-app="sequencemagic">
             {{block center}}
             {{include}}
             {{end}}
@@ -160,14 +168,6 @@
     </div>
 
   </div> <!-- /container -->
-
-  <!-- The javascript =============================================
-       (Placed at the end of the document so the pages load faster) -->
-  <script src="{{=URL('static','js/bootstrap.min.js')}}"></script>
-  <script src="{{=URL('static','js/web2py_bootstrap.js')}}"></script>
-  <script src="{{=URL('static','js/angular_1.3.12.min.js')}}"></script>
-  <script src="{{=URL('static','js/angularplasmid.directives.js')}}"></script>
-  <script src="{{=URL('static','js/angularplasmid.services.js')}}"></script>
   <!--[if lt IE 7 ]>
       <script src="{{=URL('static','js/dd_belatedpng.js')}}"></script>
       <script> DD_belatedPNG.fix('img, .png_bg'); //fix any <img> or .png_bg background-images </script>
