@@ -1,0 +1,549 @@
+(dp1
+S'output'
+p2
+S"<type 'exceptions.IOError'> [Errno 2] No such file or directory: '/home/jack/web2py/applications/sequencemagic/uploads/no_table.sequence_file.a31410272af93548.7365712e706c61696e.plain'"
+p3
+sS'layer'
+p4
+S'/home/jack/web2py/applications/sequencemagic/controllers/default.py'
+p5
+sS'code'
+p6
+S'# -*- coding: utf-8 -*-\n# this file is released under public domain and you can use without limitations\n\n#########################################################################\n## This is a sample controller\n## - index is the default action of any application\n## - user is required for authentication and authorization\n## - download is for downloading files uploaded in the db (does streaming)\n## - api is an example of Hypermedia API support and access control\n#########################################################################\n\n\ndef index():\n   \n   """Set response menu"""\n   ctrl = \'index\'\n   authorized = False\n   if request.args(0) is not None:\n       ctrl = \'myindex\'\n       if request.args(0) != \'None\':\n           p = db(db.descriptor_table.creating_user_id == request.args(0)).select()\n           for row in p:\n               if row.creating_user_id == auth.user_id:\n                   authorized = True  \n       else:\n           session.flash = T("You need to login!")\n    \n   \n       \n\n       \n       # determine in authorized is true or false\n   #response.menu = setResponseMenu(\'index\', True)\n   response.menu = setResponseMenu(ctrl, authorized)\n\n   # TODO: conditional authorization for viewing "My sequences"\n\n   user = all_descriptors = None\n\n   """If passed arg (user id), shows only user\'s sequences (requires auth). Else, shows all sequences"""\n\n   # seqList = db(db.descriptor_to_user.user_id == auth.user_id).select(orderby=db.descriptor_table.seq_id)\n   user = auth.user\n   all_descriptors = db().select(db.descriptor_table.ALL) # For now, return all descriptors in the DB\n   query = None\n   if authorized: #only showing the sequences you created and that you are subscribed without the edit button\n       #all_descriptors = db(db.descriptor_table.creating_user_id == request.args(0)).select(db.descriptor_table.ALL)\n       query = db(db.descriptor_to_user.user_id == request.args(0)).select(db.descriptor_to_user.descriptor_id)\n       #query is to get all the sequence_id subscribed to the user_id\n       \n   if all_descriptors is None:\n      session.flash = T("You have no sequences!")\n   \n  \n   \n   return locals()\n\n@auth.requires_login()\ndef subscribe():\n    update_descriptor_to_user(request.args(0))\n    redirect(URL(\'default\', \'index\'))    \n    \n    \ndef view():\n   """Set response menu"""\n   \n   response.menu = setResponseMenu(\'view\', False)\n   \n   """\n   Allows a user to visualize a particular sequence with it\'s annotations,\n   if any are present. Requires seq they want to see to be passed via URL,\n   as in sequencemagic/view/:descriptor_id\n   """\n   annotationList = seq = desc_name = desc_description = date_created = desc_author = None\n\n   desc_id = request.args(0) or None\n   if desc_id is None:\n       # no descriptor id given\n       return locals()\n\n   desc_row = db(db.descriptor_table.id == desc_id).select().first()\n   user_row = db(db.auth_user.id == desc_row.creating_user_id).select().first()\n\n   desc_author = user_row.first_name + " " + user_row.last_name\n   desc_name = desc_row.sequence_name\n   desc_description = desc_row.sequence_description\n   date_created = desc_row.date_created\n   seq_id = desc_row.seq_id\n\n   seq = db(db.sequences.id == seq_id).select().first().seq\n   if seq_id is None or seq is None:\n       # sequence doesn\'t exist\n       return locals()\n\n   # annotationList = db(db.annotations.descriptor_id == seqID).select().annotation_name\n   return locals()\n\n@auth.requires_login()\ndef upload():\n    """Set response menu"""\n    response.menu = setResponseMenu(\'upload\', True)\n\t# categories provides the supported sequence file formats\n    categories = [\'Plain Sequence\', \'FASTA\'] \n    #Enter Sequence File Form \n    form = SQLFORM.factory(\n        Field(\'name\', label=\'Sequence name\', required=True),\n\t\t#Field(\'seqs\', \'text\', requires=IS_NOT_EMPTY()),\n\t\tField(\'file_type\',label ="File Type",  requires = IS_IN_SET(categories)),\n        Field(\'sequence_file\', \'upload\', uploadfolder = \'./uploads\'),\n        Field(\'description\', \'text\')\n    )\n    form.add_button(\'Enter Sequence Manually\', URL(\'upload\', args =[\'man\']))\n    \n    #Manual Sequence Entry Form\n    if request.args(0)==\'man\': \n        form = SQLFORM.factory(\n            Field(\'name\', label=\'Sequence name\', required=True),\n    \t\tField(\'seqs\', \'text\', requires=IS_NOT_EMPTY()),\n            Field(\'description\', \'text\')\n        )\n        form.add_button(\'Enter Sequence File\', URL(\'upload\', args =[]))\n\t\n    if form.process().accepted:\n        session.flash = T("Your form was accepted")\n        if request.args(0) == \'man\':\n            insert = insert_man_sequence(form)\n            descriptor_id = insert[\'desc_id\'] #<-- defined in the models\n            update_descriptor_to_user(insert[\'seq_id\'])\n            redirect(URL(\'default\', \'index\'))\n        else:  #DO THESE  IN MODELS AND RENAME HERE\n            insert = insert_file_sequence(form)\n            descriptor_id = insert[\'desc_id\'] #<-- defined in the models\n            update_descriptor_to_user(insert[\'seq_id\'])\n            redirect(URL(\'default\', \'index\'))\n        \n     #redirect(URL(\'default\', \'view\', vars=dict(sequenceid=seq_id))\n        \n    else:\n        pass\n    return locals()\n\ndef user():\n    """\n    exposes:\n    http://..../[app]/default/user/login\n    http://..../[app]/default/user/logout\n    http://..../[app]/default/user/register\n    http://..../[app]/default/user/profile\n    http://..../[app]/default/user/retrieve_password\n    http://..../[app]/default/user/change_password\n    http://..../[app]/default/user/manage_users (requires membership in\n    use @auth.requires_login()\n        @auth.requires_membership(\'group name\')\n        @auth.requires_permission(\'read\',\'table name\',record_id)\n    to decorate functions that need access control\n    """\n    return dict(form=auth())\n\n\n@cache.action()\ndef download():\n    """\n    allows downloading of uploaded files\n    http://..../[app]/default/download/[filename]\n    """\n    return response.download(request, db)\n\n\ndef call():\n    """\n    exposes services. for example:\n    http://..../[app]/default/call/jsonrpc\n    decorate with @services.jsonrpc the functions to expose\n    supports xml, json, xmlrpc, jsonrpc, amfrpc, rss, csv\n    """\n    return service()\n\n\n@auth.requires_login() \ndef api():\n    """\n    this is example of API with access control\n    WEB2PY provides Hypermedia API (Collection+JSON) Experimental\n    """\n    from gluon.contrib.hypermedia import Collection\n    rules = {\n        \'<tablename>\': {\'GET\':{},\'POST\':{},\'PUT\':{},\'DELETE\':{}},\n        }\n    return Collection(db).process(request,response,rules)\n\nresponse._vars=response._caller(upload)\n'
+p7
+sS'snapshot'
+p8
+(dp9
+S'exception'
+p10
+(dp11
+S'__getslice__'
+p12
+S"<method-wrapper '__getslice__' of exceptions.IOError object>"
+p13
+sS'__str__'
+p14
+S"<method-wrapper '__str__' of exceptions.IOError object>"
+p15
+sS'__reduce__'
+p16
+S'<built-in method __reduce__ of exceptions.IOError object>'
+p17
+sS'__dict__'
+p18
+S'{}'
+p19
+sS'__sizeof__'
+p20
+S'<built-in method __sizeof__ of exceptions.IOError object>'
+p21
+sS'__init__'
+p22
+S"<method-wrapper '__init__' of exceptions.IOError object>"
+p23
+sS'__setattr__'
+p24
+S"<method-wrapper '__setattr__' of exceptions.IOError object>"
+p25
+sS'__reduce_ex__'
+p26
+S'<built-in method __reduce_ex__ of exceptions.IOError object>'
+p27
+sS'__new__'
+p28
+S'<built-in method __new__ of type object>'
+p29
+sS'errno'
+p30
+S'2'
+sS'__format__'
+p31
+S'<built-in method __format__ of exceptions.IOError object>'
+p32
+sS'__class__'
+p33
+S"<type 'exceptions.IOError'>"
+p34
+sS'filename'
+p35
+S"'/home/jack/web2py/applications/sequencemagic/upl...ce_file.a31410272af93548.7365712e706c61696e.plain'"
+p36
+sS'__doc__'
+p37
+S"'I/O operation failed.'"
+p38
+sS'__getitem__'
+p39
+S"<method-wrapper '__getitem__' of exceptions.IOError object>"
+p40
+sS'__setstate__'
+p41
+S'<built-in method __setstate__ of exceptions.IOError object>'
+p42
+sS'__getattribute__'
+p43
+S"<method-wrapper '__getattribute__' of exceptions.IOError object>"
+p44
+sS'args'
+p45
+S"(2, 'No such file or directory')"
+p46
+sS'__subclasshook__'
+p47
+S'<built-in method __subclasshook__ of type object>'
+p48
+sS'__unicode__'
+p49
+S'<built-in method __unicode__ of exceptions.IOError object>'
+p50
+sS'strerror'
+p51
+S"'No such file or directory'"
+p52
+sS'__delattr__'
+p53
+S"<method-wrapper '__delattr__' of exceptions.IOError object>"
+p54
+sS'__repr__'
+p55
+S"<method-wrapper '__repr__' of exceptions.IOError object>"
+p56
+sS'__hash__'
+p57
+S"<method-wrapper '__hash__' of exceptions.IOError object>"
+p58
+ssS'evalue'
+p59
+S"[Errno 2] No such file or directory: '/home/jack/web2py/applications/sequencemagic/uploads/no_table.sequence_file.a31410272af93548.7365712e706c61696e.plain'"
+p60
+sS'request'
+p61
+cgluon.html
+XML_unpickle
+p62
+(S's\x12c\x00\x00<div><table><tr><td style="font-weight:bold;vertical-align:top;">ajax</td><td style="vertical-align:top;">:</td><td><div>False</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">application</td><td style="vertical-align:top;">:</td><td><div>sequencemagic</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">args</td><td style="vertical-align:top;">:</td><td><div><table></table></div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">cid</td><td style="vertical-align:top;">:</td><td><div>None</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">client</td><td style="vertical-align:top;">:</td><td><div>127.0.0.1</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">controller</td><td style="vertical-align:top;">:</td><td><div>default</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">cookies</td><td style="vertical-align:top;">:</td><td><div><table><tr><td style="font-weight:bold;vertical-align:top;">session_id_admin</td><td style="vertical-align:top;">:</td><td><div>127.0.0.1-64f9dd5e-2d1c-434a-a569-61f3c02b927a<table><tr><td style="font-weight:bold;vertical-align:top;">comment</td><td style="vertical-align:top;">:</td><td><div></div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">domain</td><td style="vertical-align:top;">:</td><td><div></div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">expires</td><td style="vertical-align:top;">:</td><td><div></div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">httponly</td><td style="vertical-align:top;">:</td><td><div></div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">max-age</td><td style="vertical-align:top;">:</td><td><div></div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">path</td><td style="vertical-align:top;">:</td><td><div></div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">secure</td><td style="vertical-align:top;">:</td><td><div></div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">version</td><td style="vertical-align:top;">:</td><td><div></div></td></tr></table></div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">session_id_sequencemagic</td><td style="vertical-align:top;">:</td><td><div>127.0.0.1-69f10c60-1e8f-48f0-9b98-8da6967d199b<table><tr><td style="font-weight:bold;vertical-align:top;">comment</td><td style="vertical-align:top;">:</td><td><div></div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">domain</td><td style="vertical-align:top;">:</td><td><div></div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">expires</td><td style="vertical-align:top;">:</td><td><div></div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">httponly</td><td style="vertical-align:top;">:</td><td><div></div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">max-age</td><td style="vertical-align:top;">:</td><td><div></div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">path</td><td style="vertical-align:top;">:</td><td><div></div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">secure</td><td style="vertical-align:top;">:</td><td><div></div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">version</td><td style="vertical-align:top;">:</td><td><div></div></td></tr></table></div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">session_id_welcome</td><td style="vertical-align:top;">:</td><td><div>127.0.0.1-750e6004-00fd-4826-98d2-f2bf41cc21c9<table><tr><td style="font-weight:bold;vertical-align:top;">comment</td><td style="vertical-align:top;">:</td><td><div></div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">domain</td><td style="vertical-align:top;">:</td><td><div></div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">expires</td><td style="vertical-align:top;">:</td><td><div></div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">httponly</td><td style="vertical-align:top;">:</td><td><div></div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">max-age</td><td style="vertical-align:top;">:</td><td><div></div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">path</td><td style="vertical-align:top;">:</td><td><div></div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">secure</td><td style="vertical-align:top;">:</td><td><div></div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">version</td><td style="vertical-align:top;">:</td><td><div></div></td></tr></table></div></td></tr></table></div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">env</td><td style="vertical-align:top;">:</td><td><div><table><tr><td style="font-weight:bold;vertical-align:top;">CONTENT_LENGTH</td><td style="vertical-align:top;">:</td><td><div>779</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">CONTENT_TYPE</td><td style="vertical-align:top;">:</td><td><div>multipart/form-data; boundary=----WebKitFormBoundaryAB3aQQ1Dj76mKNuA</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">HTTP_ACCEPT</td><td style="vertical-align:top;">:</td><td><div>text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">HTTP_ACCEPT_ENCODING</td><td style="vertical-align:top;">:</td><td><div>gzip,deflate</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">HTTP_ACCEPT_LANGUAGE</td><td style="vertical-align:top;">:</td><td><div>en-US,en;q=0.8</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">HTTP_CACHE_CONTROL</td><td style="vertical-align:top;">:</td><td><div>max-age=0</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">HTTP_CONNECTION</td><td style="vertical-align:top;">:</td><td><div>keep-alive</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">HTTP_CONTENT_LENGTH</td><td style="vertical-align:top;">:</td><td><div>779</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">HTTP_CONTENT_TYPE</td><td style="vertical-align:top;">:</td><td><div>multipart/form-data; boundary=----WebKitFormBoundaryAB3aQQ1Dj76mKNuA</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">HTTP_COOKIE</td><td style="vertical-align:top;">:</td><td><div>session_id_welcome=127.0.0.1-750e6004-00fd-4826-98d2-f2bf41cc21c9; session_id_admin=127.0.0.1-64f9dd5e-2d1c-434a-a569-61f3c02b927a; session_id_sequencemagic=127.0.0.1-69f10c60-1e8f-48f0-9b98-8da6967d199b</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">HTTP_HOST</td><td style="vertical-align:top;">:</td><td><div>127.0.0.1:8000</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">HTTP_ORIGIN</td><td style="vertical-align:top;">:</td><td><div>http://127.0.0.1:8000</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">HTTP_REFERER</td><td style="vertical-align:top;">:</td><td><div>http://127.0.0.1:8000/sequencemagic/default/upload</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">HTTP_USER_AGENT</td><td style="vertical-align:top;">:</td><td><div>Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/38.0.2125.122 Safari/537.36</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">PATH_INFO</td><td style="vertical-align:top;">:</td><td><div>/sequencemagic/default/upload</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">QUERY_STRING</td><td style="vertical-align:top;">:</td><td><div></div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">REMOTE_ADDR</td><td style="vertical-align:top;">:</td><td><div>127.0.0.1</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">REMOTE_PORT</td><td style="vertical-align:top;">:</td><td><div>42230</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">REQUEST_METHOD</td><td style="vertical-align:top;">:</td><td><div>POST</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">SCRIPT_NAME</td><td style="vertical-align:top;">:</td><td><div></div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">SERVER_NAME</td><td style="vertical-align:top;">:</td><td><div>grokstar</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">SERVER_PORT</td><td style="vertical-align:top;">:</td><td><div>8000</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">SERVER_PROTOCOL</td><td style="vertical-align:top;">:</td><td><div>HTTP/1.1</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">SERVER_SOFTWARE</td><td style="vertical-align:top;">:</td><td><div>Rocket 1.2.6</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">app_folders</td><td style="vertical-align:top;">:</td><td><div>set([&#x27;/home/jack/web2py/applications/admin/&#x27;, &#x27;/home/jack/web2py/applications/sequencemagic/&#x27;, &#x27;/home/jack/web2py/applications/welcome/&#x27;])</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">applications_parent</td><td style="vertical-align:top;">:</td><td><div>/home/jack/web2py</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">cmd_args</td><td style="vertical-align:top;">:</td><td><div><table></table></div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">cmd_options</td><td style="vertical-align:top;">:</td><td><div>&lt;Values at 0x7f1159fac5a8: {&#x27;verbose&#x27;: False, &#x27;ip&#x27;: &#x27;127.0.0.1&#x27;, &#x27;debuglevel&#x27;: 30, &#x27;with_scheduler&#x27;: False, &#x27;ips&#x27;: [&#x27;127.0.0.1&#x27;, &#x27;::1&#x27;], &#x27;shutdown_timeout&#x27;: 5, &#x27;taskbar&#x27;: False, &#x27;with_coverage&#x27;: False, &#x27;scheduler_groups&#x27;: None, &#x27;port&#x27;: 8000, &#x27;maxthreads&#x27;: None, &#x27;softcron&#x27;: False, &#x27;server_name&#x27;: &#x27;grokstar&#x27;, &#x27;bpython&#x27;: False, &#x27;nogui&#x27;: False, &#x27;pid_filename&#x27;: &#x27;httpserver.pid&#x27;, &#x27;extcron&#x27;: False, &#x27;runcron&#x27;: False, &#x27;run_system_tests&#x27;: False, &#x27;test&#x27;: None, &#x27;folder&#x27;: &#x27;/home/jack/web2py&#x27;, &#x27;config&#x27;: &#x27;&#x27;, &#x27;minthreads&#x27;: None, &#x27;shell&#x27;: None, &#x27;run&#x27;: &#x27;&#x27;, &#x27;log_filename&#x27;: &#x27;httpserver.log&#x27;, &#x27;profiler_dir&#x27;: None, &#x27;args&#x27;: [&#x27;&#x27;], &#x27;socket_timeout&#x27;: 5, &#x27;ssl_ca_certificate&#x27;: None, &#x27;scheduler&#x27;: None, &#x27;interfaces&#x27;: None, &#x27;ssl_private_key&#x27;: &#x27;&#x27;, &#x27;gae&#x27;: None, &#x27;password&#x27;: &#x27;&lt;ask&gt;&#x27;, &#x27;request_queue_size&#x27;: 5, &#x27;ssl_certificate&#x27;: &#x27;&#x27;, &#x27;cronjob&#x27;: False, &#x27;numthreads&#x27;: None, &#x27;quiet&#x27;: False, &#x27;import_models&#x27;: False, &#x27;timeout&#x27;: 10, &#x27;plain&#x27;: False, &#x27;nobanner&#x27;: False}&gt;</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">content_length</td><td style="vertical-align:top;">:</td><td><div>779</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">content_type</td><td style="vertical-align:top;">:</td><td><div>multipart/form-data; boundary=----WebKitFormBoundaryAB3aQQ1Dj76mKNuA</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">db_sessions</td><td style="vertical-align:top;">:</td><td><div>set([])</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">debugging</td><td style="vertical-align:top;">:</td><td><div>False</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">gluon_parent</td><td style="vertical-align:top;">:</td><td><div>/home/jack/web2py</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">http_accept</td><td style="vertical-align:top;">:</td><td><div>text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">http_accept_encoding</td><td style="vertical-align:top;">:</td><td><div>gzip,deflate</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">http_accept_language</td><td style="vertical-align:top;">:</td><td><div>en-US,en;q=0.8</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">http_cache_control</td><td style="vertical-align:top;">:</td><td><div>max-age=0</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">http_connection</td><td style="vertical-align:top;">:</td><td><div>keep-alive</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">http_content_length</td><td style="vertical-align:top;">:</td><td><div>779</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">http_content_type</td><td style="vertical-align:top;">:</td><td><div>multipart/form-data; boundary=----WebKitFormBoundaryAB3aQQ1Dj76mKNuA</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">http_cookie</td><td style="vertical-align:top;">:</td><td><div>session_id_welcome=127.0.0.1-750e6004-00fd-4826-98d2-f2bf41cc21c9; session_id_admin=127.0.0.1-64f9dd5e-2d1c-434a-a569-61f3c02b927a; session_id_sequencemagic=127.0.0.1-69f10c60-1e8f-48f0-9b98-8da6967d199b</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">http_host</td><td style="vertical-align:top;">:</td><td><div>127.0.0.1:8000</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">http_origin</td><td style="vertical-align:top;">:</td><td><div>http://127.0.0.1:8000</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">http_referer</td><td style="vertical-align:top;">:</td><td><div>http://127.0.0.1:8000/sequencemagic/default/upload</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">http_user_agent</td><td style="vertical-align:top;">:</td><td><div>Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/38.0.2125.122 Safari/537.36</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">is_jython</td><td style="vertical-align:top;">:</td><td><div>False</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">is_pypy</td><td style="vertical-align:top;">:</td><td><div>False</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">is_source</td><td style="vertical-align:top;">:</td><td><div>True</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">local_hosts</td><td style="vertical-align:top;">:</td><td><div><table><tr><td><div>grokstar</div></td></tr><tr><td><div>::1</div></td></tr><tr><td><div>::ffff:127.0.0.1</div></td></tr><tr><td><div>127.0.0.1</div></td></tr><tr><td><div>localhost.localdomain</div></td></tr></table></div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">path_info</td><td style="vertical-align:top;">:</td><td><div>/sequencemagic/default/upload</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">query_string</td><td style="vertical-align:top;">:</td><td><div></div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">remote_addr</td><td style="vertical-align:top;">:</td><td><div>127.0.0.1</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">remote_port</td><td style="vertical-align:top;">:</td><td><div>42230</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">request_method</td><td style="vertical-align:top;">:</td><td><div>POST</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">request_uri</td><td style="vertical-align:top;">:</td><td><div>/sequencemagic/default/upload</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">script_name</td><td style="vertical-align:top;">:</td><td><div></div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">server_name</td><td style="vertical-align:top;">:</td><td><div>grokstar</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">server_port</td><td style="vertical-align:top;">:</td><td><div>8000</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">server_protocol</td><td style="vertical-align:top;">:</td><td><div>HTTP/1.1</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">server_software</td><td style="vertical-align:top;">:</td><td><div>Rocket 1.2.6</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">web2py_path</td><td style="vertical-align:top;">:</td><td><div>/home/jack/web2py</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">web2py_version</td><td style="vertical-align:top;">:</td><td><div>2.9.11-stable+timestamp.2014.09.15.23.35.11</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">wsgi.errors</td><td style="vertical-align:top;">:</td><td><div>&lt;open file &#x27;&lt;stderr&gt;&#x27;, mode &#x27;w&#x27; at 0x7f11647851e0&gt;</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">wsgi.file_wrapper</td><td style="vertical-align:top;">:</td><td><div>&lt;class wsgiref.util.FileWrapper at 0x7f115a02f3f8&gt;</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">wsgi.input</td><td style="vertical-align:top;">:</td><td><div>&lt;socket._fileobject object at 0x7f11506ed2d0&gt;</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">wsgi.multiprocess</td><td style="vertical-align:top;">:</td><td><div>False</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">wsgi.multithread</td><td style="vertical-align:top;">:</td><td><div>True</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">wsgi.run_once</td><td style="vertical-align:top;">:</td><td><div>False</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">wsgi.url_scheme</td><td style="vertical-align:top;">:</td><td><div>http</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">wsgi.version</td><td style="vertical-align:top;">:</td><td><div><table><tr><td><div>1</div></td></tr><tr><td><div>0</div></td></tr></table></div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">wsgi_errors</td><td style="vertical-align:top;">:</td><td><div>&lt;open file &#x27;&lt;stderr&gt;&#x27;, mode &#x27;w&#x27; at 0x7f11647851e0&gt;</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">wsgi_file_wrapper</td><td style="vertical-align:top;">:</td><td><div>&lt;class wsgiref.util.FileWrapper at 0x7f115a02f3f8&gt;</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">wsgi_input</td><td style="vertical-align:top;">:</td><td><div>&lt;socket._fileobject object at 0x7f11506ed2d0&gt;</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">wsgi_multiprocess</td><td style="vertical-align:top;">:</td><td><div>False</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">wsgi_multithread</td><td style="vertical-align:top;">:</td><td><div>True</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">wsgi_run_once</td><td style="vertical-align:top;">:</td><td><div>False</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">wsgi_url_scheme</td><td style="vertical-align:top;">:</td><td><div>http</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">wsgi_version</td><td style="vertical-align:top;">:</td><td><div><table><tr><td><div>1</div></td></tr><tr><td><div>0</div></td></tr></table></div></td></tr></table></div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">extension</td><td style="vertical-align:top;">:</td><td><div>html</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">folder</td><td style="vertical-align:top;">:</td><td><div>/home/jack/web2py/applications/sequencemagic/</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">function</td><td style="vertical-align:top;">:</td><td><div>upload</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">global_settings</td><td style="vertical-align:top;">:</td><td><div><table><tr><td style="font-weight:bold;vertical-align:top;">app_folders</td><td style="vertical-align:top;">:</td><td><div>set([&#x27;/home/jack/web2py/applications/admin/&#x27;, &#x27;/home/jack/web2py/applications/sequencemagic/&#x27;, &#x27;/home/jack/web2py/applications/welcome/&#x27;])</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">applications_parent</td><td style="vertical-align:top;">:</td><td><div>/home/jack/web2py</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">cmd_args</td><td style="vertical-align:top;">:</td><td><div><table></table></div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">cmd_options</td><td style="vertical-align:top;">:</td><td><div>&lt;Values at 0x7f1159fac5a8: {&#x27;verbose&#x27;: False, &#x27;ip&#x27;: &#x27;127.0.0.1&#x27;, &#x27;debuglevel&#x27;: 30, &#x27;with_scheduler&#x27;: False, &#x27;ips&#x27;: [&#x27;127.0.0.1&#x27;, &#x27;::1&#x27;], &#x27;shutdown_timeout&#x27;: 5, &#x27;taskbar&#x27;: False, &#x27;with_coverage&#x27;: False, &#x27;scheduler_groups&#x27;: None, &#x27;port&#x27;: 8000, &#x27;maxthreads&#x27;: None, &#x27;softcron&#x27;: False, &#x27;server_name&#x27;: &#x27;grokstar&#x27;, &#x27;bpython&#x27;: False, &#x27;nogui&#x27;: False, &#x27;pid_filename&#x27;: &#x27;httpserver.pid&#x27;, &#x27;extcron&#x27;: False, &#x27;runcron&#x27;: False, &#x27;run_system_tests&#x27;: False, &#x27;test&#x27;: None, &#x27;folder&#x27;: &#x27;/home/jack/web2py&#x27;, &#x27;config&#x27;: &#x27;&#x27;, &#x27;minthreads&#x27;: None, &#x27;shell&#x27;: None, &#x27;run&#x27;: &#x27;&#x27;, &#x27;log_filename&#x27;: &#x27;httpserver.log&#x27;, &#x27;profiler_dir&#x27;: None, &#x27;args&#x27;: [&#x27;&#x27;], &#x27;socket_timeout&#x27;: 5, &#x27;ssl_ca_certificate&#x27;: None, &#x27;scheduler&#x27;: None, &#x27;interfaces&#x27;: None, &#x27;ssl_private_key&#x27;: &#x27;&#x27;, &#x27;gae&#x27;: None, &#x27;password&#x27;: &#x27;&lt;ask&gt;&#x27;, &#x27;request_queue_size&#x27;: 5, &#x27;ssl_certificate&#x27;: &#x27;&#x27;, &#x27;cronjob&#x27;: False, &#x27;numthreads&#x27;: None, &#x27;quiet&#x27;: False, &#x27;import_models&#x27;: False, &#x27;timeout&#x27;: 10, &#x27;plain&#x27;: False, &#x27;nobanner&#x27;: False}&gt;</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">db_sessions</td><td style="vertical-align:top;">:</td><td><div>set([])</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">debugging</td><td style="vertical-align:top;">:</td><td><div>False</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">gluon_parent</td><td style="vertical-align:top;">:</td><td><div>/home/jack/web2py</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">is_jython</td><td style="vertical-align:top;">:</td><td><div>False</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">is_pypy</td><td style="vertical-align:top;">:</td><td><div>False</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">is_source</td><td style="vertical-align:top;">:</td><td><div>True</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">local_hosts</td><td style="vertical-align:top;">:</td><td><div><table><tr><td><div>grokstar</div></td></tr><tr><td><div>::1</div></td></tr><tr><td><div>::ffff:127.0.0.1</div></td></tr><tr><td><div>127.0.0.1</div></td></tr><tr><td><div>localhost.localdomain</div></td></tr></table></div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">web2py_version</td><td style="vertical-align:top;">:</td><td><div>2.9.11-stable+timestamp.2014.09.15.23.35.11</div></td></tr></table></div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">is_https</td><td style="vertical-align:top;">:</td><td><div>False</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">is_local</td><td style="vertical-align:top;">:</td><td><div>True</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">is_restful</td><td style="vertical-align:top;">:</td><td><div>False</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">is_sheduler</td><td style="vertical-align:top;">:</td><td><div>None</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">is_shell</td><td style="vertical-align:top;">:</td><td><div>None</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">now</td><td style="vertical-align:top;">:</td><td><div>datetime.datetime(2015, 3, 5, 13, 35, 5, 674644)</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">raw_args</td><td style="vertical-align:top;">:</td><td><div></div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">raw_extension</td><td style="vertical-align:top;">:</td><td><div>None</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">url</td><td style="vertical-align:top;">:</td><td><div>/sequencemagic/default/upload</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">utcnow</td><td style="vertical-align:top;">:</td><td><div>datetime.datetime(2015, 3, 5, 21, 35, 5, 674679)</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">uuid</td><td style="vertical-align:top;">:</td><td><div>sequencemagic/127.0.0.1.2015-03-05.13-35-05.72f9cd6c-8942-4ac9-8062-001e43ac6fb5</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">wsgi</td><td style="vertical-align:top;">:</td><td><div>&lt;gluon.main.LazyWSGI object at 0x7f112d0c5550&gt;</div></td></tr></table></div>'
+tRp63
+sS'frames'
+p64
+(lp65
+(dp66
+S'file'
+p67
+S'/home/jack/web2py/gluon/restricted.py'
+p68
+sS'dump'
+p69
+(dp70
+S'environment'
+p71
+S"{'A': <class 'gluon.html.A'>, 'ANY_OF': <class 'gluon.validators.ANY_OF'>, 'ASSIGNJS': <function ASSIGNJS>, 'Auth': <class 'gluon.tools.Auth'>, 'B': <class 'gluon.html.B'>, 'BEAUTIFY': <class 'gluon.html.BEAUTIFY'>, 'BODY': <class 'gluon.html.BODY'>, 'BR': <class 'gluon.html.BR'>, 'BUTTON': <class 'gluon.html.BUTTON'>, 'CAT': <class 'gluon.html.CAT'>, ...}"
+p72
+sS'ccode'
+p73
+S'<code object <module> at 0x7f11580ba130, file "/...s/sequencemagic/controllers/default.py", line 13>'
+p74
+ssS'lnum'
+p75
+I224
+sS'lines'
+p76
+(dp77
+I224
+S'        exec ccode in environment'
+p78
+sI225
+S'    except HTTP:'
+p79
+sI226
+S'        raise'
+p80
+sI227
+S'    except RestrictedError:'
+p81
+sI228
+S'        # do not encapsulate (obfuscate) the original RestrictedError'
+p82
+sI219
+S'    try:'
+p83
+sI220
+S'        if isinstance(code, types.CodeType):'
+p84
+sI221
+S'            ccode = code'
+p85
+sI222
+S'        else:'
+p86
+sI223
+S'            ccode = compile2(code, layer)'
+p87
+ssS'call'
+p88
+S"(code='# -*- coding: utf-8 -*-\\n# this file is released ...,rules)\\n\\nresponse._vars=response._caller(upload)\\n', environment={'A': <class 'gluon.html.A'>, 'ANY_OF': <class 'gluon.validators.ANY_OF'>, 'ASSIGNJS': <function ASSIGNJS>, 'Auth': <class 'gluon.tools.Auth'>, 'B': <class 'gluon.html.B'>, 'BEAUTIFY': <class 'gluon.html.BEAUTIFY'>, 'BODY': <class 'gluon.html.BODY'>, 'BR': <class 'gluon.html.BR'>, 'BUTTON': <class 'gluon.html.BUTTON'>, 'CAT': <class 'gluon.html.CAT'>, ...}, layer='/home/jack/web2py/applications/sequencemagic/controllers/default.py')"
+p89
+sS'func'
+p90
+S'restricted'
+p91
+sa(dp92
+g67
+S'/home/jack/web2py/applications/sequencemagic/controllers/default.py'
+p93
+sg69
+(dp94
+sg75
+I191
+sg76
+(dp95
+I180
+S'def api():'
+p96
+sI181
+S'    """'
+p97
+sI182
+S'    this is example of API with access control'
+p98
+sI183
+S'    WEB2PY provides Hypermedia API (Collection+JSON) Experimental'
+p99
+sI184
+S'    """'
+p100
+sI185
+S'    from gluon.contrib.hypermedia import Collection'
+p101
+sI186
+S'    rules = {'
+p102
+sI187
+S"        '<tablename>': {'GET':{},'POST':{},'PUT':{},'DELETE':{}},"
+p103
+sI188
+S'        }'
+p104
+sI189
+S'    return Collection(db).process(request,response,rules)'
+p105
+ssg88
+S'()'
+p106
+sg90
+S'<module>'
+p107
+sa(dp108
+g67
+S'/home/jack/web2py/gluon/globals.py'
+p109
+sg69
+(dp110
+S'self'
+p111
+S'undefined'
+p112
+sS'f'
+S'<function upload>'
+p113
+ssg75
+I392
+sg76
+(dp114
+I387
+S"        self.flash = ''            # used by the default view layout"
+p115
+sI388
+S'        self.meta = Storage()      # used by web2py_ajax.html'
+p116
+sI389
+S'        self.menu = []             # used by the default view layout'
+p117
+sI390
+S'        self.files = []            # used by web2py_ajax.html'
+p118
+sI391
+S'        self._vars = None'
+p119
+sI392
+S'        self._caller = lambda f: f()'
+p120
+sI393
+S'        self._view_environment = None'
+p121
+sI394
+S'        self._custom_commit = None'
+p122
+sI395
+S'        self._custom_rollback = None'
+p123
+sI396
+S"        self.generic_patterns = ['*']"
+p124
+ssg88
+S'(f=<function upload>)'
+p125
+sg90
+S'<lambda>'
+p126
+sa(dp127
+g67
+S'/home/jack/web2py/gluon/tools.py'
+p128
+sg69
+(dp129
+S'action'
+p130
+S'<function upload>'
+p131
+sS'a'
+S'()'
+p132
+sS'b'
+g19
+ssg75
+I3439
+sg76
+(dp133
+I3434
+S'                    flag = condition'
+p134
+sI3435
+S'                if not flag:'
+p135
+sI3436
+S'                    current.session.flash = self.messages.access_denied'
+p136
+sI3437
+S'                    return call_or_redirect('
+p137
+sI3438
+S'                        self.settings.on_failed_authorization)'
+p138
+sI3439
+S'                return action(*a, **b)'
+p139
+sI3440
+S'            f.__doc__ = action.__doc__'
+p140
+sI3441
+S'            f.__name__ = action.__name__'
+p141
+sI3442
+S'            f.__dict__.update(action.__dict__)'
+p142
+sI3443
+S'            return f'
+p143
+ssg88
+S'(*a=(), **b={})'
+p144
+sg90
+S'f'
+sa(dp145
+g67
+S'/home/jack/web2py/applications/sequencemagic/controllers/default.py'
+p146
+sg69
+(dp147
+S'global insert_file_sequence'
+p148
+S'<function insert_file_sequence>'
+p149
+sS'insert'
+p150
+g112
+sS'form'
+p151
+S'<gluon.sqlhtml.SQLFORM object>'
+p152
+ssg75
+I131
+sg76
+(dp153
+I128
+S"            update_descriptor_to_user(insert['seq_id'])"
+p154
+sI129
+S"            redirect(URL('default', 'index'))"
+p155
+sI130
+S'        else:  #DO THESE  IN MODELS AND RENAME HERE'
+p156
+sI131
+S'            insert = insert_file_sequence(form)'
+p157
+sI132
+S"            descriptor_id = insert['desc_id'] #<-- defined in the models"
+p158
+sI133
+S"            update_descriptor_to_user(insert['seq_id'])"
+p159
+sI134
+S"            redirect(URL('default', 'index'))"
+p160
+sI135
+S''
+sI126
+S'            insert = insert_man_sequence(form)'
+p161
+sI127
+S"            descriptor_id = insert['desc_id'] #<-- defined in the models"
+p162
+ssg88
+S'()'
+p163
+sg90
+S'upload'
+p164
+sa(dp165
+g67
+S'/home/jack/web2py/applications/sequencemagic/models/tables.py'
+p166
+sg69
+(dp167
+S'form.vars.file_type'
+p168
+S"'Plain Sequence'"
+p169
+sS'form.vars'
+p170
+S"<Storage {'file_type': 'Plain Sequence', 'descri...file.a31410272af93548.7365712e706c61696e.plain'}>"
+p171
+sS'global handle_file'
+p172
+S'<function handle_file>'
+p173
+sS'form'
+p174
+S'<gluon.sqlhtml.SQLFORM object>'
+p175
+sS'form.vars.sequence_file'
+p176
+S"'no_table.sequence_file.a31410272af93548.7365712e706c61696e.plain'"
+p177
+sS'seqs'
+p178
+g112
+ssg75
+I26
+sg76
+(dp179
+I21
+S"   #redirect(URL('default', 'view', vars=dict(sequenceid=seq_id))"
+p180
+sI22
+S'   return dict(desc_id=desc_id, seq_id=seq_id)'
+p181
+sI23
+S''
+sI24
+S'def insert_file_sequence(form):'
+p182
+sI25
+S'#    file_id = db.file_uploads.insert(file_type = form.vars.file_type, seq_file= form.vars.sequence_file)'
+p183
+sI26
+S'    seqs = handle_file(form.vars.file_type, form.vars.sequence_file)#file_id)'
+p184
+sI27
+S'    seq_id = db.sequences.insert(seqs)'
+p185
+sI28
+S'    desc_id = insert_descriptor_table(form, seq_id)'
+p186
+sI29
+S'    update_descriptor_to_user(desc_id)'
+p187
+sI30
+S'    return dict(desc_id=desc_id, seq_id=seq_id)'
+p188
+ssg88
+S'(form=<gluon.sqlhtml.SQLFORM object>)'
+p189
+sg90
+S'insert_file_sequence'
+p190
+sa(dp191
+g67
+S'/home/jack/web2py/applications/sequencemagic/models/tables.py'
+p192
+sg69
+(dp193
+sg75
+I52
+sg76
+(dp194
+I47
+S'#opens file and returns the raw sequence'
+p195
+sI48
+S'def handle_file(file_type, name_file):   #(file_id):'
+p196
+sI49
+S'    #seq_file = db(db.file_uploads.id==file_id).select().first().seq_file'
+p197
+sI50
+S'    #file_type = db(db.file_uploads.id==file_id).select().first().file_type'
+p198
+sI51
+S"    seq_file = open(os.path.join(request.folder, 'uploads', name_file),"
+p199
+sI52
+S"\t'rb').read"
+p200
+sI53
+S"    if file_type == 'FAFSA':"
+p201
+sI54
+S"        with open(seq_file, 'r') as seqs:"
+p202
+sI55
+S"            sequence = ''"
+p203
+sI56
+S"            for line in (line for line in seqs if not line.startswith('#')):"
+p204
+ssg88
+S"(file_type='Plain Sequence', name_file='no_table.sequence_file.a31410272af93548.7365712e706c61696e.plain')"
+p205
+sg90
+S'handle_file'
+p206
+sasS'pyver'
+p207
+S'Python 2.7.8: /usr/bin/python2 (prefix: /usr)'
+p208
+sS'session'
+p209
+g62
+(S's\xfa\x08\x00\x00<div><table><tr><td style="font-weight:bold;vertical-align:top;">auth</td><td style="vertical-align:top;">:</td><td><div><table><tr><td style="font-weight:bold;vertical-align:top;">expiration</td><td style="vertical-align:top;">:</td><td><div>3600</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">hmac_key</td><td style="vertical-align:top;">:</td><td><div>1a3d2253-6563-41ac-b003-757616ebabe9</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">last_visit</td><td style="vertical-align:top;">:</td><td><div>datetime.datetime(2015, 3, 5, 13, 34, 58, 130308)</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">remember_me</td><td style="vertical-align:top;">:</td><td><div>False</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">user</td><td style="vertical-align:top;">:</td><td><div><table><tr><td style="font-weight:bold;vertical-align:top;">email</td><td style="vertical-align:top;">:</td><td><div>jaselber@ucsc.edu</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">first_name</td><td style="vertical-align:top;">:</td><td><div>jack</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">id</td><td style="vertical-align:top;">:</td><td><div>2L</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">last_name</td><td style="vertical-align:top;">:</td><td><div>selberg</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">registration_id</td><td style="vertical-align:top;">:</td><td><div></div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">registration_key</td><td style="vertical-align:top;">:</td><td><div></div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">reset_password_key</td><td style="vertical-align:top;">:</td><td><div></div></td></tr></table></div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">user_groups</td><td style="vertical-align:top;">:</td><td><div><table><tr><td style="font-weight:bold;vertical-align:top;">2</td><td style="vertical-align:top;">:</td><td><div>user_2</div></td></tr></table></div></td></tr></table></div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">flash</td><td style="vertical-align:top;">:</td><td><div>Your form was accepted</div></td></tr></table></div>'
+tRp210
+sS'etype'
+p211
+S"<type 'exceptions.IOError'>"
+p212
+sS'date'
+p213
+S'Thu Mar  5 13:35:05 2015'
+p214
+sS'response'
+p215
+g62
+(S's\xfa\x1e\x00\x00<div><table><tr><td style="font-weight:bold;vertical-align:top;">body</td><td style="vertical-align:top;">:</td><td><div>&lt;cStringIO.StringO object at 0x7f11506bc6f8&gt;</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">cookies</td><td style="vertical-align:top;">:</td><td><div><table><tr><td style="font-weight:bold;vertical-align:top;">session_id_sequencemagic</td><td style="vertical-align:top;">:</td><td><div>127.0.0.1-69f10c60-1e8f-48f0-9b98-8da6967d199b<table><tr><td style="font-weight:bold;vertical-align:top;">comment</td><td style="vertical-align:top;">:</td><td><div></div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">domain</td><td style="vertical-align:top;">:</td><td><div></div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">expires</td><td style="vertical-align:top;">:</td><td><div></div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">httponly</td><td style="vertical-align:top;">:</td><td><div></div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">max-age</td><td style="vertical-align:top;">:</td><td><div></div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">path</td><td style="vertical-align:top;">:</td><td><div>/</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">secure</td><td style="vertical-align:top;">:</td><td><div></div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">version</td><td style="vertical-align:top;">:</td><td><div></div></td></tr></table></div></td></tr></table></div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">delimiters</td><td style="vertical-align:top;">:</td><td><div><table><tr><td><div>{{</div></td></tr><tr><td><div>}}</div></td></tr></table></div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">files</td><td style="vertical-align:top;">:</td><td><div><table></table></div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">flash</td><td style="vertical-align:top;">:</td><td><div>Success!</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">form_label_separator</td><td style="vertical-align:top;">:</td><td><div>: </div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">formstyle</td><td style="vertical-align:top;">:</td><td><div>table3cols</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">generic_patterns</td><td style="vertical-align:top;">:</td><td><div><table><tr><td><div>*</div></td></tr></table></div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">google_analytics_id</td><td style="vertical-align:top;">:</td><td><div>None</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">headers</td><td style="vertical-align:top;">:</td><td><div><table><tr><td style="font-weight:bold;vertical-align:top;">X-Powered-By</td><td style="vertical-align:top;">:</td><td><div>web2py</div></td></tr></table></div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">logo</td><td style="vertical-align:top;">:</td><td><div><a class="brand" href="http://www.web2py.com/"><b>web<span>2</span>py</b>&trade;&nbsp;</a></div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">menu</td><td style="vertical-align:top;">:</td><td><div><table><tr><td><div><table><tr><td><div>Browse sequences</div></td></tr><tr><td><div>False</div></td></tr><tr><td><div>/sequencemagic/default/index</div></td></tr><tr><td><div><table></table></div></td></tr></table></div></td></tr><tr><td><div><table><tr><td><div>Upload a sequence</div></td></tr><tr><td><div>True</div></td></tr><tr><td><div>/sequencemagic/default/upload</div></td></tr><tr><td><div><table></table></div></td></tr></table></div></td></tr><tr><td><div><table><tr><td><div>My sequences</div></td></tr><tr><td><div>False</div></td></tr><tr><td><div>/sequencemagic/default/index/2</div></td></tr><tr><td><div><table></table></div></td></tr></table></div></td></tr></table></div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">meta</td><td style="vertical-align:top;">:</td><td><div><table><tr><td style="font-weight:bold;vertical-align:top;">author</td><td style="vertical-align:top;">:</td><td><div>Your Name &lt;you@example.com&gt;</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">generator</td><td style="vertical-align:top;">:</td><td><div>Web2py Web Framework</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">keywords</td><td style="vertical-align:top;">:</td><td><div>web2py, python, framework</div></td></tr></table></div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">models_to_run</td><td style="vertical-align:top;">:</td><td><div><table><tr><td><div>^\\w+\\.py$</div></td></tr><tr><td><div>^default/\\w+\\.py$</div></td></tr><tr><td><div>^default/upload/\\w+\\.py$</div></td></tr></table></div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">postprocessing</td><td style="vertical-align:top;">:</td><td><div><table></table></div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">session_client</td><td style="vertical-align:top;">:</td><td><div>127.0.0.1</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">session_cookie_compression_level</td><td style="vertical-align:top;">:</td><td><div>None</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">session_cookie_expires</td><td style="vertical-align:top;">:</td><td><div>None</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">session_cookie_key</td><td style="vertical-align:top;">:</td><td><div>None</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">session_data_name</td><td style="vertical-align:top;">:</td><td><div>session_data_sequencemagic</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">session_file</td><td style="vertical-align:top;">:</td><td><div>&lt;open file &#x27;/home/jack/web2py/applications/sequencemagic/sessions/061/0fd/127.0.0.1-69f10c60-1e8f-48f0-9b98-8da6967d199b&#x27;, mode &#x27;rb+&#x27; at 0x7f11503ecf60&gt;</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">session_filename</td><td style="vertical-align:top;">:</td><td><div>/home/jack/web2py/applications/sequencemagic/sessions/127.0.0.1-69f10c60-1e8f-48f0-9b98-8da6967d199b</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">session_hash</td><td style="vertical-align:top;">:</td><td><div>cb1001774e725442aacd1abc0ee1b76e</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">session_id</td><td style="vertical-align:top;">:</td><td><div>127.0.0.1-69f10c60-1e8f-48f0-9b98-8da6967d199b</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">session_id_name</td><td style="vertical-align:top;">:</td><td><div>session_id_sequencemagic</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">session_locked</td><td style="vertical-align:top;">:</td><td><div>True</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">session_masterapp</td><td style="vertical-align:top;">:</td><td><div>sequencemagic</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">session_new</td><td style="vertical-align:top;">:</td><td><div>False</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">session_storage_type</td><td style="vertical-align:top;">:</td><td><div>file</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">status</td><td style="vertical-align:top;">:</td><td><div>200</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">subtitle</td><td style="vertical-align:top;">:</td><td><div></div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">title</td><td style="vertical-align:top;">:</td><td><div>Sequencemagic</div></td></tr><tr><td style="font-weight:bold;vertical-align:top;">view</td><td style="vertical-align:top;">:</td><td><div>default/upload.html</div></td></tr></table></div>'
+tRp216
+sS'locals'
+p217
+(dp218
+S'file_type'
+p219
+S"'Plain Sequence'"
+p220
+sS'name_file'
+p221
+S"'no_table.sequence_file.a31410272af93548.7365712e706c61696e.plain'"
+p222
+sssS'traceback'
+p223
+S'Traceback (most recent call last):\n  File "/home/jack/web2py/gluon/restricted.py", line 224, in restricted\n    exec ccode in environment\n  File "/home/jack/web2py/applications/sequencemagic/controllers/default.py", line 191, in <module>\n  File "/home/jack/web2py/gluon/globals.py", line 392, in <lambda>\n    self._caller = lambda f: f()\n  File "/home/jack/web2py/gluon/tools.py", line 3439, in f\n    return action(*a, **b)\n  File "/home/jack/web2py/applications/sequencemagic/controllers/default.py", line 131, in upload\n    insert = insert_file_sequence(form)\n  File "/home/jack/web2py/applications/sequencemagic/models/tables.py", line 26, in insert_file_sequence\n    seqs = handle_file(form.vars.file_type, form.vars.sequence_file)#file_id)\n  File "/home/jack/web2py/applications/sequencemagic/models/tables.py", line 52, in handle_file\n    \'rb\').read\nIOError: [Errno 2] No such file or directory: \'/home/jack/web2py/applications/sequencemagic/uploads/no_table.sequence_file.a31410272af93548.7365712e706c61696e.plain\'\n'
+p224
+s.

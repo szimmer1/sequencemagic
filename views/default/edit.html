@@ -1,0 +1,59 @@
+{{extend 'layout.html'}}
+
+<h1>{{=header_text}}</h1>
+
+{{if authorized:}}
+
+<!-- bootstrap angular view app here -->
+<div class="row" ng-app="sequencemagic">
+    <div class="col-md-6 col-xs-12">
+        <p>Annotations list goes here. A possibility is to create a tab for each user and show the annotations that user has added, like so</p>
+        <p>Annotations can be color coded to the user</p>
+        <p>Any user subscribed to the plasmid can add annotations</p>
+    </div>
+
+    <div class="col-md-6 col-xs-12">
+
+        <!-- plasmid building goes here -->
+        <plasmid id="p1"
+                 sequencelength="1000">
+            <plasmidtrack id="t1">
+                <tracklabel id="seq-name"
+                            text="{{=sequence_name}}"></tracklabel>
+            </plasmidtrack>
+        </plasmid>
+
+    </div>
+</div>
+
+<!-- Custom plasmid styles -->
+<style>
+    #p1 {
+    }
+    #t1 {
+        stroke: 1px solid lightgrey;
+        fill: lightgreen;
+    }
+    #seq-name {
+        font-size: 25px;
+    }
+</style>
+
+<!-- Custom angular UI -->
+<script>
+    $(document).ready(function() {
+        angular.module('sequencemagic', ['sequencemagic.controllers', 'angularplasmid', 'angularplasmid.services'])
+                .config( function($interpolateProvider) {
+                    $interpolateProvider.startSymbol('{[');
+                    $interpolateProvider.endSymbol(']}')
+                });
+
+        angular.module('sequencemagic.controllers', [])
+                .controller('ViewController', ['$scope', function($scope) {
+
+                }])
+
+    })
+</script>
+
+{{pass}}

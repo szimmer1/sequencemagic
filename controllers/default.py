@@ -9,14 +9,20 @@
 ## - api is an example of Hypermedia API support and access control
 #########################################################################
 
+import gluon.contrib.simplejson as json
+import os
 
 def index():
+   user = all_descriptors = None
+   header_text = "Latest sequences"
+   search_seq = ""
    
    """Set response menu"""
    ctrl = 'index'
    authorized = False
    if request.args(0) is not None:
        ctrl = 'myindex'
+       header_text = "My sequences"
        if request.args(0) != 'None':
            p = db(db.descriptor_table.creating_user_id == request.args(0)).select()
            for row in p:
@@ -24,24 +30,17 @@ def index():
                    authorized = True  
        else:
            session.flash = T("You need to login!")
-    
-   
-       
 
-       
-       # determine in authorized is true or false
    #response.menu = setResponseMenu('index', True)
    response.menu = setResponseMenu(ctrl, authorized)
 
    # TODO: conditional authorization for viewing "My sequences"
 
-   user = all_descriptors = None
-
    """If passed arg (user id), shows only user's sequences (requires auth). Else, shows all sequences"""
 
    # seqList = db(db.descriptor_to_user.user_id == auth.user_id).select(orderby=db.descriptor_table.seq_id)
    user = auth.user
-   all_descriptors = db().select(db.descriptor_table.ALL) # For now, return all descriptors in the DB
+   all_descriptors = db().select(db.descriptor_table.ALL, orderby=~db.descriptor_table.date_created) # For now, return all descriptors in the DB
    query = None
    if authorized: #only showing the sequences you created and that you are subscribed without the edit button
        #all_descriptors = db(db.descriptor_table.creating_user_id == request.args(0)).select(db.descriptor_table.ALL)
@@ -57,28 +56,60 @@ def index():
 
 @auth.requires_login()
 def subscribe():
-    update_descriptor_to_user(request.args(0))
-    redirect(URL('default', 'index'))    
-    
-    
+    checking = db((db.descriptor_to_user.descriptor_id == request.args(0)) & (db.descriptor_to_user.user_id == auth.user_id)).select(db.descriptor_to_user.ALL)
+    if not checking:
+        update_descriptor_to_user(request.args(0))   
+    redirect(URL('default', 'index'))
+
+@auth.requires_login()
+def edit():
+    # authorize the user to edit
+    authorized = False
+    sequence_name = 'Unknown sequence'
+    if request.args(0) is not None:
+       header_text = "You're not authorized to edit this sequence"
+       p = db(db.descriptor_table.id == request.args(0)).select().first()
+       if p.creating_user_id == auth.user_id:
+              authorized = True
+              header_text = sequence_name = p.sequence_name
+       else:
+              session.flash = T("You need to login!")
+    else:
+        redirect(URL('default', 'index'))
+
+    seq_row = file_url = None
+    if authorized:
+        seq_row = db(db.sequences.id == p.seq_id).select().first()
+        if seq_row is not None and seq_row.seq_file_type == 'FASTA':
+            file_url = URL('static', 'uploads', args=[seq_row.seq_file_name], scheme=True, host=True)
+        else:
+            session.flash = T("Couldn't find a sequence for the given descriptor ID")
+
+    return locals()
+
 def view():
-   """Set response menu"""
-   
-   response.menu = setResponseMenu('view', False)
-   
    """
    Allows a user to visualize a particular sequence with it's annotations,
    if any are present. Requires seq they want to see to be passed via URL,
    as in sequencemagic/view/:descriptor_id
    """
-   annotationList = seq = desc_name = desc_description = date_created = desc_author = None
-
+   annotationList = sequence_row = seq = seq_type = desc_name = \
+       desc_description = date_created = desc_author = list_of_subscriptors = \
+       seq_length = annotation_list = plasmid_name = None
+   found_sequence = False
+   
    desc_id = request.args(0) or None
    if desc_id is None:
        # no descriptor id given
        return locals()
 
    desc_row = db(db.descriptor_table.id == desc_id).select().first()
+
+   if desc_row is None:
+       # descriptor doesn't exist
+       seq = 'Sequence not found for given descriptor ID'
+       return locals()
+
    user_row = db(db.auth_user.id == desc_row.creating_user_id).select().first()
 
    desc_author = user_row.first_name + " " + user_row.last_name
@@ -86,39 +117,223 @@ def view():
    desc_description = desc_row.sequence_description
    date_created = desc_row.date_created
    seq_id = desc_row.seq_id
+   
+   # list_of_subscriptors = db((db.descriptor_to_user.descriptor_id == desc_id) & (db.descriptor_to_user.user_id == db.auth_user.id)).select(db.auth_user.first_name, db.auth_user.last_name, db.auth_user.email).as_list()
+   list_of_subscriptors = [
+       {
+           'first_name' : 'Shahar',
+           'last_name' : 'Zimmerman',
+           'email' : 'szimmer1@ucsc.edu'
+       },
+       {
+           'first_name' : 'Roger',
+           'last_name' : 'Tester',
+           'email' : 'roger@tester.com'
+       }
+   ]
+   list_of_subscriptors = json.dumps(list_of_subscriptors)
 
-   seq = db(db.sequences.id == seq_id).select().first().seq
-   if seq_id is None or seq is None:
-       # sequence doesn't exist
+   sequence_row = db(db.sequences.id == seq_id).select().first()
+   if sequence_row.seq is not None:
+       found_sequence = True
+       seq = sequence_row.seq
+       seq_type = 'text'
+   elif sequence_row.seq_file_name is not None:
+       found_sequence = True
+       seq = sequence_row.seq_file_name
+       seq_type = sequence_row.seq_file_type
+
+   if seq is None:
+       # sequence info is corrupted/missing
+       seq = 'Sequence info not found'
        return locals()
 
-   # annotationList = db(db.annotations.descriptor_id == seqID).select().annotation_name
+
+   # authorize the user to edit
+   authorized = False
+   if seq is not None:
+      header_text = "You're not authorized to edit this sequence"
+      p = db(db.descriptor_table.id == desc_id).select().first()
+      if p.creating_user_id == auth.user_id:
+             authorized = True
+             header_text = sequence_name = p.sequence_name
+             if len(sequence_name.split(" ")) > 1:
+                 plasmid_name = ""
+                 list = sequence_name.split(" ")
+                 for word in list:
+                     plasmid_name += word[0].upper()
+             else:
+                 plasmid_name = sequence_name
+      else:
+             session.flash = T("You need to login!")
+   else:
+       return locals()
+
+   sequence_row = file_url = None
+   if authorized:
+       # get sequence length and annotation data
+       seq_length = len(seq.replace(" ", ""))
+       # annotation_list = db(db.annotation_to_descriptor.descriptor_id == desc_id).select().as_list()
+       annotation_list = [
+           {
+               'annotation_name' : 'Test single annotation',
+               'annotation_location' : [20],
+               'date_created' : datetime.utcnow().strftime("%m/%d/%y"),
+               'annotation_description' : 'A test annotation hard-coded in for now',
+               'annotation_sequence' : 'ACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTG'
+           },
+           {
+               'annotation_name' : 'Test multi annotation',
+               'annotation_location' : [130, 200],
+               'date_created' : datetime.utcnow().strftime("%m/%d/%y"),
+               'annotation_description' : 'A test annotation hard-coded in for now',
+               'annotation_sequence' : 'ACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTG'
+           }
+       ]
+       annotation_list = json.dumps(annotation_list)
+
    return locals()
+
+   """suscriptions_of_user= db((db.descriptor_to_user.user_id==auth.user_id)&(db.descriptor_to_user.descriptor_id==db.descriptor_table.id)&(db.descriptor_table.seq_id == db.sequences.id)).select(db.descriptor_table.ALL)
+   {{if len(suscriptions_of_user) > 0:}}
+                <ul>Im suscribed to :
+                    {{for p_2 in suscriptions_of_user:}}
+                        <li>{{=p_2.sequence_name}}</li>
+
+                    {{pass}}
+                </ul>
+            {{pass}} THIS IS THE QUERY AND THE PART TO PUT DIRECTLY IN THE VIEW."""
 
 @auth.requires_login()
 def upload():
     """Set response menu"""
     response.menu = setResponseMenu('upload', True)
 
+    categories = ["FASTA", "Plain Sequence"]
+    file_active = True;
     form = SQLFORM.factory(
         Field('name', label='Sequence name', required=True),
-        Field('seqs', 'text', requires=IS_NOT_EMPTY()),
-        #Field('sequence_file', 'upload'),
+        Field('file_type', label = "File Type", requires=IS_IN_SET(categories)),
+        Field('sequence_file', 'upload', uploadfolder=request.folder+'/static/uploads'),
+        Field('description', 'text')
+    )
+    #form.add_button('Enter Sequence Manually', URL('upload', args=['man']))
+    
+	#Manual Sequence Entry form
+    if request.args(0)=='man':
+        file_active = False;
+        form = SQLFORM.factory(
+            Field('name', label = 'Sequence name', required = True),
+            Field('seqs', 'text', requires=IS_NOT_EMPTY()),
+            Field('description', 'text')
+        )
+        #form.add_button('Enter Sequence File', URL('upload', args=[]))
+
+    if form.process().accepted:
+        session.flash = T("Your form was accepted")
+        if request.args(0)=='man':
+            insert = insert_man_sequence(form)
+            descriptor_id = insert['desc_id'] #<-- defined in the models
+            redirect(URL('default', 'index'))
+     	else: 
+            insert = insert_file_sequence(form)
+            descriptor_id = insert['desc_id'] #<-- defined in the models
+            redirect(URL('default', 'index'))
+     
+	 #redirect(URL('default', 'view', vars=dict(sequenceid=seq_id))
+    else:
+        pass
+    return locals()
+
+
+"""This is just to test the tables and probably not how we should do this"""
+@auth.requires_login()
+def upload_annotation():
+    """Set response menu"""
+    # response.menu = setResponseMenu('multiple', True)
+
+    categories = []
+    for seq in db(db.descriptor_table).select(): #run through seq names
+        """if auth.user.first_name == seq.creating_user_id: #if they match curr users name append them for later
+            categories.append(seq.sequence_name)"""
+        if (seq.creating_user_id == auth.user_id):
+            categories.append(seq.sequence_name)
+
+    form = SQLFORM.factory(
+        Field('seq_name', label=' Select A Sequence to Annotate', requires=IS_IN_SET(categories), required=True), # consists of only users own sequences
+        Field('annotation_name', requires=IS_NOT_EMPTY()),
+        Field('annotation_position', 'list:integer'),
         Field('description', 'text')
     )
 
     if form.process().accepted:
         session.flash = T("Your form was accepted")
-        insert = insert_sequence(form)
-        descriptor_id = insert['desc_id'] #<-- defined in the models
-        update_descriptor_to_user(insert['seq_id'])
-        redirect(URL('default', 'index'))
-        
-     #redirect(URL('default', 'view', vars=dict(sequenceid=seq_id))
-        
+        descriptor_id = insert_annotation(form) #<-- defined in the models
+        redirect(URL('default', 'view', args=[descriptor_id]))
     else:
         pass
-    return locals()
+    return dict(form=form)
+
+"""Done just needs tweaking based on UI"""
+def search():
+    search_seq = request.vars.search
+    search_pages = []
+    search_page_ids = []
+    if search_seq is not None:
+        all_pages = db().select(db.descriptor_table.ALL, orderby=db.descriptor_table.sequence_name)
+        for page in all_pages:
+            if (search_seq.lower() in repr(page.sequence_name).lower()):
+                search_page_ids.append(page.id)
+                search_pages.append(page)
+    return dict(search_seq=search_seq, search_pages=search_pages, search_page_ids=search_page_ids)
+
+
+'''only sequence uploader may delete sequence'''
+@auth.requires_login()
+def delete():
+		desc_id = request.vars.desc_id
+		annotation_id = request.vars.annotation_id
+		annotations = None
+		#check user permissions
+		if auth.user.id <> db(db.descriptor_table.id==desc_id).select().first().creating_user_id:
+			session.flash=T('Invalid Privileges')
+			redirect(URL('default', 'index'))
+		if desc_id:
+			#delete discriptor_to_user tuples
+			db(db.descriptor_to_user.descriptor_id==desc_id).delete()
+			#delete sequences tuple
+			seq_id=db(db.descriptor_table.id==desc_id).select().first().seq_id
+			seq_file_name=db(db.sequences.id==seq_id).select().first().seq_file_name
+			db(db.sequences.id==seq_id).delete()
+			if seq_file_name <> None:
+				#remove file in /sequencemagic/uploads/<sequences.seq_file_name>
+				os.remove(request.folder+'static/uploads/'+seq_file_name)
+			#delete descriptor
+			db(db.descriptor_table.id==desc_id).delete()
+			#delete annotation tuples
+			annotations = db(db.annotation_to_descriptor.descriptor_id==desc_id).select()
+		if annotation_id:
+			annotations = db(db.annotations.id==annotation_id &
+							 db.annotations.creating_user_id==auth.user.id).select()
+			
+		for item in annotations:
+			annot_id = item.annotation_id
+			db(db.annotations.annotation_id==annot_id).delete()
+			#delete annotation to descriptor tuples
+			db(db.annotation_to_descriptor.annotation_id==annot_id).delete()
+		
+		redirect (URL('default', 'index'))
+
+		return
+
+'''Anyone subscribed to sequence may edit annotations
+def delete_annotation(annotation_id):
+		#delete annotations tuple
+		#delete annotation_to_descriptors
+	return
+'''
+
+
 
 def user():
     """

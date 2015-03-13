@@ -1,0 +1,17 @@
+{{left_sidebar_enabled,right_sidebar_enabled=False,('message' in globals())}}
+{{extend 'layout.html'}}
+
+<h1>Results relating to {{=search_seq}}</h1>
+{{if len(search_pages) > 0:}}
+   <ul>
+   {{i=0}}
+   {{for page in search_pages:}}
+      <li>{{=A('%s' % search_pages[i].sequence_name, _href=URL('default', 'view', args=search_page_ids[i]))}}
+      {{i=i+1}}
+   {{pass}}
+   </ul>
+{{else:}}
+   There are no entries related to {{=search_seq}}.
+   <br>{{=A('Upload your own %s sequence' % search_seq, _href=URL('default', 'upload'))}}
+{{pass}}
+<p>{{=A('Home Page', _class = 'btn', _href=URL('default', 'index'))}}</p>

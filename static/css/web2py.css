@@ -320,3 +320,18 @@ li.w2p_grid_breadcrumb_elem {
 .ie-lte8 div.flash{ filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#222222', endColorstr='#000000', GradientType=0 ); }
 .ie-lte8 div.flash:hover {filter:alpha(opacity=25);}
 .ie9 #w2p_query_panel {padding-bottom:2px}
+
+
+/* custom css */
+.btn-subscribe {
+    height: 25px;
+    width: 30px;
+    text-align: center;
+    border-radius: 20%;
+    border: 2px solid #004;
+    color: #004
+}
+.btn-subscribe:hover, .btn-subscribed {
+    border: 2px solid lightcoral;
+    color: lightcoral;
+}
