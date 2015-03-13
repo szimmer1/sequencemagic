@@ -9,6 +9,8 @@
 ## - api is an example of Hypermedia API support and access control
 #########################################################################
 
+import gluon.contrib.simplejson as json
+
 def index():
    user = all_descriptors = None
    header_text = "Latest sequences"
@@ -90,7 +92,10 @@ def view():
    if any are present. Requires seq they want to see to be passed via URL,
    as in sequencemagic/view/:descriptor_id
    """
-   annotationList = sequence_row = seq = seq_type = desc_name = desc_description = date_created = desc_author = list_of_suscriptors = None
+   annotationList = sequence_row = seq = seq_type = desc_name = \
+       desc_description = date_created = desc_author = list_of_subscriptors = \
+       seq_length = annotation_list = plasmid_name = None
+   found_sequence = False
    
    desc_id = request.args(0) or None
    if desc_id is None:
@@ -112,13 +117,28 @@ def view():
    date_created = desc_row.date_created
    seq_id = desc_row.seq_id
    
-   list_of_suscriptors = db((db.descriptor_to_user.descriptor_id == desc_id) & (db.descriptor_to_user.user_id == db.auth_user.id)).select(db.auth_user.first_name, db.auth_user.last_name, db.auth_user.email)
-   
+   # list_of_subscriptors = db((db.descriptor_to_user.descriptor_id == desc_id) & (db.descriptor_to_user.user_id == db.auth_user.id)).select(db.auth_user.first_name, db.auth_user.last_name, db.auth_user.email).as_list()
+   list_of_subscriptors = [
+       {
+           'first_name' : 'Shahar',
+           'last_name' : 'Zimmerman',
+           'email' : 'szimmer1@ucsc.edu'
+       },
+       {
+           'first_name' : 'Roger',
+           'last_name' : 'Tester',
+           'email' : 'roger@tester.com'
+       }
+   ]
+   list_of_subscriptors = json.dumps(list_of_subscriptors)
+
    sequence_row = db(db.sequences.id == seq_id).select().first()
    if sequence_row.seq is not None:
+       found_sequence = True
        seq = sequence_row.seq
        seq_type = 'text'
    elif sequence_row.seq_file_name is not None:
+       found_sequence = True
        seq = sequence_row.seq_file_name
        seq_type = sequence_row.seq_file_type
 
@@ -127,7 +147,50 @@ def view():
        seq = 'Sequence info not found'
        return locals()
 
-   # annotationList = db(db.annotations.descriptor_id == seqID).select().annotation_name
+
+   # authorize the user to edit
+   authorized = False
+   if seq is not None:
+      header_text = "You're not authorized to edit this sequence"
+      p = db(db.descriptor_table.id == desc_id).select().first()
+      if p.creating_user_id == auth.user_id:
+             authorized = True
+             header_text = sequence_name = p.sequence_name
+             if len(sequence_name.split(" ")) > 1:
+                 plasmid_name = ""
+                 list = sequence_name.split(" ")
+                 for word in list:
+                     plasmid_name += word[0].upper()
+             else:
+                 plasmid_name = sequence_name
+      else:
+             session.flash = T("You need to login!")
+   else:
+       return locals()
+
+   sequence_row = file_url = None
+   if authorized:
+       # get sequence length and annotation data
+       seq_length = len(seq.replace(" ", ""))
+       # annotation_list = db(db.annotation_to_descriptor.descriptor_id == desc_id).select().as_list()
+       annotation_list = [
+           {
+               'annotation_name' : 'Test single annotation',
+               'annotation_location' : [20],
+               'date_created' : datetime.utcnow().strftime("%m/%d/%y"),
+               'annotation_description' : 'A test annotation hard-coded in for now',
+               'annotation_sequence' : 'ACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTG'
+           },
+           {
+               'annotation_name' : 'Test multi annotation',
+               'annotation_location' : [130, 200],
+               'date_created' : datetime.utcnow().strftime("%m/%d/%y"),
+               'annotation_description' : 'A test annotation hard-coded in for now',
+               'annotation_sequence' : 'ACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTG'
+           }
+       ]
+       annotation_list = json.dumps(annotation_list)
+
    return locals()
 
    """suscriptions_of_user= db((db.descriptor_to_user.user_id==auth.user_id)&(db.descriptor_to_user.descriptor_id==db.descriptor_table.id)&(db.descriptor_table.seq_id == db.sequences.id)).select(db.descriptor_table.ALL)
