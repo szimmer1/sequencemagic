@@ -14,19 +14,30 @@ import gluon.contrib.simplejson as json
 def index():
    user = all_descriptors = None
    header_text = "Latest sequences"
-   search_seq = ""
+
    
    """Set response menu"""
    ctrl = 'index'
    authorized = False
+   if request.vars.search_seq is not None:
+       header_text = "Search Results"
+       results_list = []
+       if len(request.vars.search_pages) > 0:
+           i=0
+           for page in request.vars.search_pages:
+               results_list.append(A('%s' % request.vars.search_pages[i].sequence_name, _href=URL('default', 'view', args=request.vars.search_page_ids[i])))
+               i=i+1
+
    if request.args(0) is not None:
        ctrl = 'myindex'
        header_text = "My sequences"
        if request.args(0) != 'None':
-           p = db(db.descriptor_table.creating_user_id == request.args(0)).select()
+           p = db(db.descriptor_to_user.user_id == request.args(0)).select()
            for row in p:
-               if row.creating_user_id == auth.user_id:
-                   authorized = True  
+               if row.user_id == auth.user_id:
+                   authorized = True
+           """if p is None:
+               session.flash = T("You need to subscribe")"""
        else:
            session.flash = T("You need to login!")
 
@@ -284,7 +295,8 @@ def search():
             if (search_seq.lower() in repr(page.sequence_name).lower()):
                 search_page_ids.append(page.id)
                 search_pages.append(page)
-    return dict(search_seq=search_seq, search_pages=search_pages, search_page_ids=search_page_ids)
+    redirect(URL('default', 'index', vars=dict(search_seq=search_seq, search_pages=search_pages, search_page_ids=search_page_ids)))
+    # return locals()
 
 def user():
     """
