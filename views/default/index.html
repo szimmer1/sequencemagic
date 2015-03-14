@@ -6,8 +6,40 @@
         </div>
     </div>
     <div class="row">
-        <p>{{=FORM(TABLE(TR(TD(INPUT(_name='search', type='search', _placeholder="Search for a sequence")))),_action=URL('default', 'search'),_method='get')}}</p>
-        {{if query is not None:}}
+        {{if header_text != 'Search Results' and header_text != 'My sequences':}}
+            <p>{{=FORM(TABLE(TR(TD(INPUT(_name='search', type='search', _placeholder="Search for a sequence")))),_action=URL('default', 'search'),_method='get')}}</p>
+        {{pass}}
+        {{if search:}}
+            {{if search_pages is not None:}}
+                {{for row in search_pages:}}
+                    <div class="col-md-4">
+                            <div class="thumbnail">
+                                <div class="caption">
+                                    <h3>{{=row.sequence_name}}</h3>
+                                    <p>{{=row.sequence_description}}</p>
+                                    <p>
+                                        <a class="btn btn-primary" href="{{=URL('default', 'view', args=[row.id])}}">
+                                            View&nbsp;&nbsp;<i class="fa fa-eye"></i>
+                                        </a>
+                                        {{if authorized:}}
+                                            {{if row.creating_user_id == auth.user_id:}}
+                                                <a class="btn btn-danger" onclick="return confirm('Are you sure?')" href="{{=URL('default', 'delete', vars=dict(desc_id=row.id))}}">
+                                                    <i class="fa fa-trash"></i>
+                                                </a>
+                                            {{pass}}
+                                        {{pass}}
+                                   </p>
+                                </div>
+                            </div>
+                        </div>
+                {{pass}}
+            {{else:}}
+                There are no entries related to {{=search_seq}}.
+                <br>{{=A('Upload your own %s sequence' % search_seq, _href=URL('default', 'upload'))}}
+            {{pass}}
+            <br>
+            <p>{{=A('Home Page', _class = 'btn', _href=URL('default', 'index'))}}</p></br>
+        {{elif query is not None:}}
             {{for row in query:}}
                 {{all_descriptors = db(db.descriptor_table.id == row.descriptor_id).select(db.descriptor_table.ALL)}}
                     {{for descriptor in all_descriptors:}}
@@ -22,8 +54,8 @@
                                         </a>
                                         {{if authorized:}}
                                             {{if descriptor.creating_user_id == auth.user_id:}}
-                                                <a class="btn btn-primary" href="{{=URL('default', 'edit', args=[descriptor.id])}}">
-                                                    Edit&nbsp;&nbsp;<i class="fa fa-magic"></i>
+                                                <a class="btn btn-danger" onclick="return confirm('Are you sure?')" href="{{=URL('default', 'delete', vars=dict(desc_id=descriptor.id))}}">
+                                                    <i class="fa fa-trash"></i>
                                                 </a>
                                             {{pass}}
                                         {{pass}}
@@ -47,14 +79,9 @@
                                     <a class="btn btn-primary" href="{{=URL('default', 'view', args=[descriptor.id])}}">
                                             View&nbsp;&nbsp;<i class="fa fa-eye"></i>
                                     </a>
-                                    {{if authorized:}}
-                                        <a class="btn btn-primary" href="{{=URL('default', 'edit', args=[descriptor.id])}}">
-                                                    Edit&nbsp;&nbsp;<i class="fa fa-magic"></i>
-                                        </a>
-                                    {{pass}}
                                     {{if descriptor.creating_user_id == auth.user_id:}}
-                                                <a class="btn btn-primary" href="{{=URL('default', 'edit', args=[descriptor.id])}}">
-                                                    Edit&nbsp;&nbsp;<i class="fa fa-magic"></i>
+                                                <a class="btn btn-danger" onclick="return confirm('Are you sure?')" href="{{=URL('default', 'delete', vars=dict(desc_id=descriptor.id))}}">
+                                                    <i class="fa fa-trash"></i>
                                                 </a>
                                     {{pass}}
                                 </p>

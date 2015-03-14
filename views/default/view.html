@@ -7,9 +7,10 @@
 
         <!-- bootstrap angular view controller here -->
         <div class="row" ng-controller="ViewController as view">
+            {[view.viewTest]}
             <div class="col-md-6 col-xs-12">
-                <ul class="nav nav-tabs nav-stacked">
-                    <li ng-repeat="user in view.users">
+                <ul class="list-group">
+                    <li class="list-group-item" ng-repeat="user in view.users">
                         {[view.initials(user)]}
                     </li>
                 </ul>
@@ -47,31 +48,31 @@
 
         <!-- Custom angular UI -->
         <script>
-            $(document).ready(function() {
-                angular.module('sequencemagic', ['sequencemagic.controllers', 'angularplasmid', 'angularplasmid.services'])
-                        .config( function($interpolateProvider) {
+
+            angular.module('sequencemagic', ['angularplasmid', 'angularplasmid.services'])
+                        .config(function ($interpolateProvider) {
                             $interpolateProvider.startSymbol('{[');
                             $interpolateProvider.endSymbol(']}')
-                        });
-
-                angular.module('sequencemagic.controllers', [])
-                        .controller('ViewController', ['$scope', function($scope) {
+                        })
+                        .controller('ViewController', ['$scope', function ($scope) {
                             $scope.viewTest = "testing";
 
-                            $scope.users = {{=XML(list_of_subscriptors)}};
+                            // $scope.users = {{=XML(list_of_subscriptors)}};
 
-                            $scope.initials = function(userObj) {
+                            $scope.initials = function (userObj) {
                                 debugger;
                                 var initials = "";
                                 if (userObj.first_name && userObj.last_name) {
-                                    initials = userObj.first_name.slice(0,1).toUpperCase() + userObj.last_name.slice(0,1).toUpperCase()
+                                    initials = userObj.first_name.slice(0, 1).toUpperCase() + userObj.last_name.slice(0, 1).toUpperCase()
                                 }
                                 return initials
-                            }
+                            };
                         }]);
 
-                angular.bootstrap(document, 'sequencemagic');
-            })
+            angular.element(document).ready(function() {
+                angular.bootstrap(document, ['sequencemagic']);
+            });
+
         </script>
 
     {{pass}}

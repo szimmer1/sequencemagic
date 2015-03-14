@@ -10,24 +10,34 @@
 #########################################################################
 
 import gluon.contrib.simplejson as json
+import os
 
 def index():
    user = all_descriptors = None
    header_text = "Latest sequences"
-
+   search = False
+   search_seq = ""
+   search_pages = []
    
    """Set response menu"""
    ctrl = 'index'
    authorized = False
    if request.vars.search_seq is not None:
        header_text = "Search Results"
-       results_list = []
-       if len(request.vars.search_pages) > 0:
-           i=0
-           for page in request.vars.search_pages:
-               results_list.append(A('%s' % request.vars.search_pages[i].sequence_name, _href=URL('default', 'view', args=request.vars.search_page_ids[i])))
-               i=i+1
-
+       if request.vars.search_pages is not None:
+           if len(request.vars.search_pages) > 0:
+               search = True
+               search_seq = request.vars.search_seq
+               all_pages = db().select(db.descriptor_table.ALL, orderby=db.descriptor_table.sequence_name)
+               for page in all_pages:
+                   if (search_seq.lower() in repr(page.sequence_name).lower()):
+                       search_pages.append(page)
+               return locals()
+       else: # no search results found
+           search = True
+           search_seq = request.vars.search_seq
+           search_pages = None
+           return locals()
    if request.args(0) is not None:
        ctrl = 'myindex'
        header_text = "My sequences"
@@ -295,8 +305,58 @@ def search():
             if (search_seq.lower() in repr(page.sequence_name).lower()):
                 search_page_ids.append(page.id)
                 search_pages.append(page)
-    redirect(URL('default', 'index', vars=dict(search_seq=search_seq, search_pages=search_pages, search_page_ids=search_page_ids)))
+    redirect(URL('default', 'index', vars=dict(search_seq=search_seq,
+                                               search_pages=search_pages,
+                                               search_page_ids=search_page_ids)))
     # return locals()
+
+
+'''only sequence uploader may delete sequence'''
+@auth.requires_login()
+def delete():
+		desc_id = request.vars.desc_id
+		annotation_id = request.vars.annotation_id
+		annotations = None
+		#check user permissions
+		if auth.user.id <> db(db.descriptor_table.id==desc_id).select().first().creating_user_id:
+			session.flash=T('Invalid Privileges')
+			redirect(URL('default', 'index'))
+		if desc_id:
+			#delete discriptor_to_user tuples
+			db(db.descriptor_to_user.descriptor_id==desc_id).delete()
+			#delete sequences tuple
+			seq_id=db(db.descriptor_table.id==desc_id).select().first().seq_id
+			seq_file_name=db(db.sequences.id==seq_id).select().first().seq_file_name
+			db(db.sequences.id==seq_id).delete()
+			if seq_file_name <> None:
+				#remove file in /sequencemagic/uploads/<sequences.seq_file_name>
+				os.remove(request.folder+'static/uploads/'+seq_file_name)
+			#delete descriptor
+			db(db.descriptor_table.id==desc_id).delete()
+			#delete annotation tuples
+			annotations = db(db.annotation_to_descriptor.descriptor_id==desc_id).select()
+		if annotation_id:
+			annotations = db(db.annotations.id==annotation_id &
+							 db.annotations.creating_user_id==auth.user.id).select()
+			
+		for item in annotations:
+			annot_id = item.annotation_id
+			db(db.annotations.annotation_id==annot_id).delete()
+			#delete annotation to descriptor tuples
+			db(db.annotation_to_descriptor.annotation_id==annot_id).delete()
+		
+		redirect (URL('default', 'index'))
+
+		return
+
+'''Anyone subscribed to sequence may edit annotations
+def delete_annotation(annotation_id):
+		#delete annotations tuple
+		#delete annotation_to_descriptors
+	return
+'''
+
+
 
 def user():
     """
