@@ -1,15 +1,113 @@
 {{extend 'layout.html'}}
 
+{{if found_sequence:}}
     <h1>{{=desc_name}} <small>by {{=desc_author}} on {{if date_created is not None:}}{{=date_created.strftime("%m/%d/%y")}}{{pass}}</small></h1>
-    <div class="container">
-        Type: {{=seq_type}}<br>
+
+    {{if authorized:}}
+
+        <div class="row">
+            <div class="col-md-9 col-xs-12">
+
+                <div class="row">
+                    <div class="col-md-12 col-xs-12 plasmid-wrapper">
+                        <!-- plasmid building goes here -->
+                        <plasmid id="p1"
+                                 sequencelength="{{=seq_length}}">
+                            <plasmidtrack id="t1">
+                                <tracklabel id="seq-name"
+                                            text="{{=plasmid_name}}"></tracklabel>
+                            </plasmidtrack>
+                        </plasmid>
+                    </div>
+
+                    <div class="col-md-12 col-xs-12">
+                        <div class="row">
+                            <div class="col-md-2 col-xs-2 user-nav">
+                                <ul class="nav nav-tabs nav-stacked">
+                                    {{for index, user in enumerate(list_of_subscriptors):}}
+                                        <li class="btn btn-user btn-{{=index}}{{if str(user.id) == selected_user_id:}} active-button{{pass}}">
+                                            <a href="{{=URL('default', 'view', args=[desc_id], vars=dict(user_id=user.id))}}">{{=abbreviation(user.first_name + " " + user.last_name)}}</a>
+                                        </li>
+                                    {{pass}}
+                                </ul>
+                            </div>
+                            <div class="col-md-10 col-xs-10 annotations-view">
+                                {{if user_chosen:}}
+                                    <div class="annotations-wrap">
+                                        {{for annotation in annotation_list:}}
+                                            <p>{{=annotation}}</p>
+                                        {{pass}}
+                                    </div>
+                                {{else:}}
+                                    <h3>Choose a user</h3>
+                                    <p>Annotations list goes here. A possibility is to create a tab for each user and show the annotations that user has added, like so</p>
+                                    <p>Annotations can be color coded to the user</p>
+                                    <p>Any user subscribed to the plasmid can add annotations</p>
+                                {{pass}}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="col-md-3 col-xs-12">
+                <p>It would be cool if we had an update stream right over here</p>
+            </div>
+
+        <!-- Custom plasmid styles -->
+        <style>
+            #p1 {
+            }
+            #t1 {
+                stroke: 1px solid lightgrey;
+                fill: lightgreen;
+            }
+            #seq-name {
+                font-size: 25px;
+            }
+        </style>
+
+        <!-- Bootstrap angular -->
+        <script>
+
+            angular.module('sequencemagic', ['angularplasmid', 'angularplasmid.services'])
+                        .config(function ($interpolateProvider) {
+                            $interpolateProvider.startSymbol('{[');
+                            $interpolateProvider.endSymbol(']}')
+                        });
+
+            angular.element(document).ready(function() {
+                angular.bootstrap(document, ['sequencemagic']);
+            });
+
+        </script>
+
+        <!-- jquery stuff -->
+        <script>
+            $(document).ready(function() {
+                // adjusts annotations view height to fit with users tab
+                $(".annotations-view").height(function() {
+                    self = $(this);
+                    if (self.height() < $(".user-nav").height()) {
+                        return $(".user-nav").height()
+                    }
+                    else {
+                        return self.height
+                    }
+                });
+
+                // sets the annotations view border color
+                var color = $(".active-button").css("background-color");
+                $(".annotations-view").css({
+                    'border-left': '15px solid '+color,
+                    'border-top': '15px solid '+color,
+                    'border-top-left-radius': '10px'
+                })
+            })
+        </script>
+
+    {{pass}}
+{{else:}}
         {{=seq}}
-    </div>
-    <p>Users suscribed to this sequence: </p>
-			{{if list_of_suscriptors is not None and len(list_of_suscriptors) > 0:}}
-				<ul>
-					{{for p in list_of_suscriptors:}}
-						<li>{{=p.first_name}} {{=p.last_name}}, {{=p.email}}</li>
-					{{pass}}
-				</ul>
-			{{pass}}
+{{pass}}
