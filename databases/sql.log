@@ -107,3 +107,4 @@ success!
 timestamp: 2015-03-12T14:28:10.341980
 ALTER TABLE annotations ADD creating_user_id INTEGER REFERENCES auth_user (id) ON DELETE CASCADE;
 success!
+success!
