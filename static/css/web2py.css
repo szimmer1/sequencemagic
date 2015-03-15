@@ -335,6 +335,9 @@ li.w2p_grid_breadcrumb_elem {
     border: 2px solid lightcoral;
     color: lightcoral;
 }
+.col-md-9.left-panel, .col-xs-12.left-panel {
+    padding-right: 20px;
+}
 .annotations-wrap {
 }
 .col-md-12.plasmid-wrapper, .col-xs-12.plasmid-wrapper {
