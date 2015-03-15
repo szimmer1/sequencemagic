@@ -187,10 +187,11 @@ def view():
        if request.vars.user_id is not None:
             selected_user_id = request.vars.user_id
             user_chosen = True
-            # TODO select annotation list based on request.vars.user_id ~ possibly use a SQLFORM.grid ?
 
-            annotation_list = db((db.annotation_to_descriptor.descriptor_id == desc_id) & (db.annotations.creating_user_id == selected_user_id)).select(db.annotations.ALL)
-            # annotations_form = SQLFORM.grid((db.annotation_to_descriptor.descriptor_id == desc_id) & (db.annotations.creating_user_id == selected_user_id))
+            annotation_list = db(
+                (db.annotations.id.belongs(db.annotation_to_descriptor.descriptor_id == desc_id))
+                & (db.annotations.creating_user_id == selected_user_id)
+            ).select(db.annotations.ALL)
 
        else:
             pass
