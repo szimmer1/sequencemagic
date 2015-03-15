@@ -199,17 +199,16 @@ def view():
        # get sequence length and annotation data
        seq_length = len(seq.replace(" ", ""))
        if request.vars.user_id is not None:
-            selected_user_id = request.vars.user_id
+            selected_user_id = long(request.vars.user_id+"L")
             user_chosen = True
-
-            annotation_list = db(
-                (db.annotations.id.belongs(db.annotation_to_descriptor.descriptor_id == desc_id))
-                & (db.annotations.creating_user_id == selected_user_id)
-            ).select(db.annotations.ALL)
-
-       else:
-            pass
-
+       pass
+       annotation_list = {}
+       for user in db(db.auth_user).select():
+          annotation_list[user.id] = db(
+                                           (db.annotations.id.belongs(db.annotation_to_descriptor.descriptor_id == desc_id))
+                                           & (db.annotations.creating_user_id == user.id)
+                                       ).select(db.annotations.ALL)
+       pass
 
    return locals()
 
@@ -270,6 +269,7 @@ def upload_annotation():
         Field('seq_name', label=' Select A Sequence to Annotate', requires=IS_IN_SET(categories), required=True), # consists of only users own sequences
         Field('annotation_name', requires=IS_NOT_EMPTY()),
         Field('annotation_position', 'list:integer'),
+        Field('length', 'integer'),
         Field('description', 'text')
     )
 
@@ -355,7 +355,7 @@ def update_sequence():
 
     form = SQLFORM.factory(
         Field('name', label='Select a Sequence', requires=IS_IN_SET(categories), required=True),
-        Field('position', 'list:integer', label = 'Location to Delete')
+        Field('position', 'list:integer', label='Location to Delete')
     )
 
     if request.args(0)=='add':
@@ -364,7 +364,7 @@ def update_sequence():
         form = SQLFORM.factory(
             Field('name', label='Select a Sequence to Add to', requires=IS_IN_SET(categories), required=True),
             Field('seqs', 'text', label='Additional Sequence to Add', requires=IS_NOT_EMPTY()),
-            Field('position', 'list:integer', label = 'Position to Add Sequence')
+            Field('position', 'list:integer', label='Position(s) to Insert Sequence')
         )
     if request.args(0)=='replace':
         del_active = False
@@ -372,7 +372,7 @@ def update_sequence():
         form = SQLFORM.factory(
             Field('name', label='Select a Sequence', requires=IS_IN_SET(categories), required=True),
             Field('seqs', 'text', label='Replacement Sequence', requires=IS_NOT_EMPTY()),
-            Field('position', 'list:integer', label = 'Positions to replace with above Sequence')
+            Field('position', 'list:integer', label='Position(s) to replace with above Sequence')
         )
 
     if form.process().accepted:

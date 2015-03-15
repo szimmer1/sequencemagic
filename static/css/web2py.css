@@ -353,6 +353,10 @@ li.w2p_grid_breadcrumb_elem {
     border-bottom-width: 0;
     padding: 20px;
 }
+.col-md-12.add-annotation-wrapper, .col-xs-12.add-annotation-wrapper {
+    margin: 20px;
+    padding-left: 15%;
+}
 .btn.btn-user, .btn.btn-user > a {
     color: white;
     border: 2px solid #000044;
@@ -368,6 +372,9 @@ li.w2p_grid_breadcrumb_elem {
 .btn.btn-user.btn-0, .btn.btn-user.btn-0 > a {
     background: #1abc9c;
     border: #1abc9c;
+}
+.marker-0 {
+    fill: #1abc9c;
 }
 .btn.btn-user.btn-1, .btn.btn-user.btn-1 > a {
     background: #57d68d;

@@ -31,13 +31,36 @@ def update_existing_sequence(form,flag):
     existing_desc_row = db(db.descriptor_table.sequence_name == form.vars.name).select().first().seq_id
     existing_seq_row = db(db.sequences.id == existing_desc_row).select().first()
     existing_seq = existing_seq_row.seq
-    # still need to access form.vars.position
-    if flag == 'del':
-        new_seq = existing_seq[0:]
-        new_seq += existing_seq[:]
+    # make list of ints because form.vars.position is a string
+    position_list = []
+    for pos in form.vars.position:
+        position_list.append(int(pos))
+
+    if flag == 'del': # only allowing for single bases, one substring, or multiple substrings
+        if len(position_list) == 1: # deleting single base
+            new_seq = existing_seq[0:position_list[0]]
+            new_seq += existing_seq[position_list[0]+1:]
+        elif len(position_list) % 2 == 0: # deleting at least one substring
+            seqs_to_del = []
+            new_seq = existing_seq
+            for pos in range(0, len(position_list),2): # first get all instances of string
+                pos1 = position_list[pos]
+                pos2 = position_list[pos+1]
+                del_seq = existing_seq[pos1:pos2+1]
+                seqs_to_del.append(del_seq)
+            for seq in seqs_to_del: # now replace by empty string
+                new_seq = new_seq.replace(seq,'',1)
         existing_seq_row.update_record(seq=new_seq)
+
     elif flag == 'add':
-        pass
+        if len(position_list) == 1: # adding in sequence in only one position
+            new_seq = existing_seq[0:position_list[0]+1]
+            new_seq += form.vars.seqs
+            new_seq += existing_seq[position_list[0]+1:]
+        elif len(position_list) > 1: # adding after more than one position
+            pass
+        existing_seq_row.update_record(seq=new_seq)
+
     elif flag == 'replace':
         pass
 
@@ -60,6 +83,7 @@ def insert_annotation(form):
                               annotation_location = form.vars.annotation_position,
                               date_created = datetime.utcnow(),
                               annotation_description = form.vars.description,
+                              annotation_length = form.vars.length
                               )
    descriptor_id = db(db.descriptor_table.sequence_name == form.vars.seq_name).select().first().id
    update_annotation_to_descriptor(annotation_id, descriptor_id)
@@ -116,6 +140,7 @@ db.define_table('annotations',
 				 Field('annotation_location', 'list:integer'),
 				 Field('date_created', 'datetime'),
 				 Field('annotation_description', 'text'),
+                 Field('annotation_length', 'integer'),
 				 Field('creating_user_id', 'reference auth_user')
 				 )
 
