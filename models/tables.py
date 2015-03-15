@@ -87,10 +87,25 @@ def insert_annotation(form):
                               )
    descriptor_id = db(db.descriptor_table.sequence_name == form.vars.seq_name).select().first().id
    update_annotation_to_descriptor(annotation_id, descriptor_id)
+   annotation_name = form.vars.annotation_name
+   update_active_annotations(annotation_id,annotation_name , descriptor_id)
    return descriptor_id
 
 def update_annotation_to_descriptor(annotation_id, descriptor_id):
    db.annotation_to_descriptor.insert(annotation_id = annotation_id, descriptor_id = descriptor_id)
+
+def update_active_annotations(new_id, new_name, desc_id):
+	item = db((db.active_annotations.annotation_name==new_name) & (
+		db.active_annotations.descriptor_id == desc_id)).select().first()
+	if item:	
+		db((db.active_annotations.annotation_name==new_name) &(
+			db.active_annotations.descriptor_id == desc_id)).update(active_id=new_id)
+	else:
+		db.active_annotations.insert(active_id = new_id, 
+									annotation_name = new_name,
+									descriptor_id = desc_id
+									)
+	#TODO UPDATE DELETES TO WORK WITH ACTIVE ANNOTATIONS
 
 """
 sequence table, which contain all the sequences
@@ -141,10 +156,20 @@ db.define_table('annotations',
 				 Field('date_created', 'datetime'),
 				 Field('annotation_description', 'text'),
                  Field('annotation_length', 'integer'),
-				 Field('creating_user_id', 'reference auth_user')
+				 Field('creating_user_id', 'reference auth_user'),
 				 )
-
 db.annotations.creating_user_id.default = auth.user_id
+
+'''
+active_annotations
+creates an index for each unique annotation name.
+Used to generate annotation groups for versioning
+'''
+db.define_table('active_annotations',
+				Field('annotation_name'),
+				Field('active_id', 'reference annotations'),
+				Field('descriptor_id', 'reference descriptor_table')
+				)
 
 """Linker table for annotations and descriptors"""
 db.define_table('annotation_to_descriptor',
