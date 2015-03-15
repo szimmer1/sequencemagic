@@ -335,3 +335,50 @@ li.w2p_grid_breadcrumb_elem {
     border: 2px solid lightcoral;
     color: lightcoral;
 }
+.annotations-wrap {
+}
+.col-md-12.plasmid-wrapper, .col-xs-12.plasmid-wrapper {
+    text-align: center;
+    padding: 20px;
+    margin: 20px 0;
+}
+.col-md-2.user-nav, .col-xs-2.user-nav {
+    padding-right: 0;
+}
+.col-md-10.annotations-view, .col-xs-10.annotations-view {
+    border-right-width: 0;
+    border-bottom-width: 0;
+    padding: 20px;
+}
+.btn.btn-user, .btn.btn-user > a {
+    color: white;
+    border: 2px solid #000044;
+    border-top-right-radius: 0px;
+    border-bottom-right-radius: 0px;
+    border-top-left-radius: 10px;
+    border-bottom-left-radius: 10px;
+    margin: 5px;
+}
+.btn.btn-user.active-button, .btn.btn-user:hover {
+    margin-right: 0;
+}
+.btn.btn-user.btn-0, .btn.btn-user.btn-0 > a {
+    background: #1abc9c;
+    border: #1abc9c;
+}
+.btn.btn-user.btn-1, .btn.btn-user.btn-1 > a {
+    background: #57d68d;
+    border: #57d68d;
+}
+.btn.btn-user.btn-2, .btn.btn-user.btn-2 > a {
+    background: #5cace2;
+    border: #5cace2;
+}
+.btn.btn-user.btn-3, .btn.btn-user.btn-3 > a {
+    background: #9b59b6;
+    border: #9b59b6;
+}
+.btn.btn-user.btn-4, .btn.btn-user.btn-4 > a {
+    background: #5c6d7e;
+    border: #5c6d7e;
+}
