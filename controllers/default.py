@@ -303,9 +303,16 @@ def delete():
     annotation_id = request.vars.annotation_id
     annotations = None
     # check user permissions
-    if auth.user.id <> db(db.descriptor_table.id==desc_id).select().first().creating_user_id:
-        session.flash=T('Invalid Privileges')
-        redirect(URL('default', 'index'))
+    if desc_id:
+        if auth.user.id <> db(db.descriptor_table.id==desc_id).select().first().creating_user_id:
+			session.flash=T('Invalid Privileges')
+			redirect(URL('default', 'index'))
+    elif annotation_id:
+        if auth.user.id <> db(db.annotations.id==annotation_id).select().first().creating_user_id:
+			test = db(db.annotations.id==annotation_id).select().first().creating_user_id
+			session.flash=T('Invalid Privileges')
+			redirect(URL('default', 'index'))
+	'''deleting sequence+associated annotations'''		
     if desc_id:
         # delete discriptor_to_user tuples
         db(db.descriptor_to_user.descriptor_id==desc_id).delete()
@@ -320,15 +327,15 @@ def delete():
         db(db.descriptor_table.id==desc_id).delete()
         # delete annotation tuples
         annotations = db(db.annotation_to_descriptor.descriptor_id==desc_id).select()
+    	for item in annotations:
+        	annot_id = item.annotation_id
+        	db(db.annotations.annotation_id==annot_id).delete()
+        	# delete annotation to descriptor tuples
+        	db(db.annotation_to_descriptor.annotation_id==annot_id).delete()
+	'''deleting single annotation with given annotation id'''
     if annotation_id:
-        annotations = db(db.annotations.id==annotation_id &
-                         db.annotations.creating_user_id==auth.user.id).select()
-
-    for item in annotations:
-        annot_id = item.annotation_id
-        db(db.annotations.annotation_id==annot_id).delete()
-        # delete annotation to descriptor tuples
-        db(db.annotation_to_descriptor.annotation_id==annot_id).delete()
+		db(db.annotation_to_descriptor.annotation_id==annotation_id).delete()
+		db(db.annotations.id==annotation_id).delete()
 
     redirect (URL('default', 'index'))
 
