@@ -22,20 +22,19 @@ def index():
    """Set response menu"""
    ctrl = 'index'
    authorized = False
+
    if request.vars.search_seq is not None:
        header_text = "Search Results"
+       search = True
+       search_seq = request.vars.search_seq
        if request.vars.search_pages is not None:
            if len(request.vars.search_pages) > 0:
-               search = True
-               search_seq = request.vars.search_seq
                all_pages = db().select(db.descriptor_table.ALL, orderby=db.descriptor_table.sequence_name)
                for page in all_pages:
                    if (search_seq.lower() in repr(page.sequence_name).lower()):
                        search_pages.append(page)
                return locals()
        else: # no search results found
-           search = True
-           search_seq = request.vars.search_seq
            search_pages = None
            return locals()
    if request.args(0) is not None:
@@ -261,8 +260,6 @@ def upload():
             redirect(URL('default', 'index'))
      
 	 #redirect(URL('default', 'view', vars=dict(sequenceid=seq_id))
-    else:
-        pass
     return locals()
 
 
@@ -306,48 +303,46 @@ def search():
                 search_page_ids.append(page.id)
                 search_pages.append(page)
     redirect(URL('default', 'index', vars=dict(search_seq=search_seq,
-                                               search_pages=search_pages,
-                                               search_page_ids=search_page_ids)))
-    # return locals()
+                                               search_pages=search_pages)))
 
 
 '''only sequence uploader may delete sequence'''
 @auth.requires_login()
 def delete():
-		desc_id = request.vars.desc_id
-		annotation_id = request.vars.annotation_id
-		annotations = None
-		#check user permissions
-		if auth.user.id <> db(db.descriptor_table.id==desc_id).select().first().creating_user_id:
-			session.flash=T('Invalid Privileges')
-			redirect(URL('default', 'index'))
-		if desc_id:
-			#delete discriptor_to_user tuples
-			db(db.descriptor_to_user.descriptor_id==desc_id).delete()
-			#delete sequences tuple
-			seq_id=db(db.descriptor_table.id==desc_id).select().first().seq_id
-			seq_file_name=db(db.sequences.id==seq_id).select().first().seq_file_name
-			db(db.sequences.id==seq_id).delete()
-			if seq_file_name <> None:
-				#remove file in /sequencemagic/uploads/<sequences.seq_file_name>
-				os.remove(request.folder+'static/uploads/'+seq_file_name)
-			#delete descriptor
-			db(db.descriptor_table.id==desc_id).delete()
-			#delete annotation tuples
-			annotations = db(db.annotation_to_descriptor.descriptor_id==desc_id).select()
-		if annotation_id:
-			annotations = db(db.annotations.id==annotation_id &
-							 db.annotations.creating_user_id==auth.user.id).select()
-			
-		for item in annotations:
-			annot_id = item.annotation_id
-			db(db.annotations.annotation_id==annot_id).delete()
-			#delete annotation to descriptor tuples
-			db(db.annotation_to_descriptor.annotation_id==annot_id).delete()
-		
-		redirect (URL('default', 'index'))
+    desc_id = request.vars.desc_id
+    annotation_id = request.vars.annotation_id
+    annotations = None
+    # check user permissions
+    if auth.user.id <> db(db.descriptor_table.id==desc_id).select().first().creating_user_id:
+        session.flash=T('Invalid Privileges')
+        redirect(URL('default', 'index'))
+    if desc_id:
+        # delete discriptor_to_user tuples
+        db(db.descriptor_to_user.descriptor_id==desc_id).delete()
+        #delete sequences tuple
+        seq_id=db(db.descriptor_table.id==desc_id).select().first().seq_id
+        seq_file_name=db(db.sequences.id==seq_id).select().first().seq_file_name
+        db(db.sequences.id==seq_id).delete()
+        if seq_file_name <> None:
+            # remove file in /sequencemagic/uploads/<sequences.seq_file_name>
+            os.remove(request.folder+'static/uploads/'+seq_file_name)
+        # delete descriptor
+        db(db.descriptor_table.id==desc_id).delete()
+        # delete annotation tuples
+        annotations = db(db.annotation_to_descriptor.descriptor_id==desc_id).select()
+    if annotation_id:
+        annotations = db(db.annotations.id==annotation_id &
+                         db.annotations.creating_user_id==auth.user.id).select()
 
-		return
+    for item in annotations:
+        annot_id = item.annotation_id
+        db(db.annotations.annotation_id==annot_id).delete()
+        # delete annotation to descriptor tuples
+        db(db.annotation_to_descriptor.annotation_id==annot_id).delete()
+
+    redirect (URL('default', 'index'))
+
+    return
 
 '''Anyone subscribed to sequence may edit annotations
 def delete_annotation(annotation_id):
@@ -356,7 +351,52 @@ def delete_annotation(annotation_id):
 	return
 '''
 
+def update_sequence():
+    """Set response menu"""
+    # response.menu = setResponseMenu('upload', True)
 
+    categories = []
+    del_active = True
+    add_active = False
+
+    for seq in db(db.descriptor_table).select(): #run through seq names
+        if (seq.creating_user_id == auth.user_id):
+            categories.append(seq.sequence_name)
+
+    form = SQLFORM.factory(
+        Field('name', label='Select a Sequence', requires=IS_IN_SET(categories), required=True),
+        Field('position', 'list:integer', label = 'Location to Delete')
+    )
+
+    if request.args(0)=='add':
+        del_active = False
+        add_active = True
+        form = SQLFORM.factory(
+            Field('name', label='Select a Sequence to Add to', requires=IS_IN_SET(categories), required=True),
+            Field('seqs', 'text', label='Additional Sequence to Add', requires=IS_NOT_EMPTY()),
+            Field('position', 'list:integer', label = 'Position to Add Sequence')
+        )
+    if request.args(0)=='replace':
+        del_active = False
+        add_active = False
+        form = SQLFORM.factory(
+            Field('name', label='Select a Sequence', requires=IS_IN_SET(categories), required=True),
+            Field('seqs', 'text', label='Replacement Sequence', requires=IS_NOT_EMPTY()),
+            Field('position', 'list:integer', label = 'Positions to replace with above Sequence')
+        )
+
+    if form.process().accepted:
+        session.flash = T("Your form was accepted")
+        if request.args(0)=='add':
+            update_existing_sequence(form,'add')
+            redirect(URL('default', 'index'))
+        elif request.args(0)=='replace':
+            update_existing_sequence(form,'replace')
+            redirect(URL('default', 'index'))
+     	else:
+            update_existing_sequence(form,'del')
+            redirect(URL('default', 'index'))
+    return locals()
 
 def user():
     """

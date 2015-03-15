@@ -27,7 +27,19 @@ def insert_file_sequence(form):
    update_descriptor_to_user(desc_id)
    return dict(desc_id = desc_id, seq_id=seq_id)
 
-
+def update_existing_sequence(form,flag):
+    existing_desc_row = db(db.descriptor_table.sequence_name == form.vars.name).select().first().seq_id
+    existing_seq_row = db(db.sequences.id == existing_desc_row).select().first()
+    existing_seq = existing_seq_row.seq
+    # still need to access form.vars.position
+    if flag == 'del':
+        new_seq = existing_seq[0:]
+        new_seq += existing_seq[:]
+        existing_seq_row.update_record(seq=new_seq)
+    elif flag == 'add':
+        pass
+    elif flag == 'replace':
+        pass
 
 def insert_descriptor_table(form, seq_id):
    # updates descriptor_table table with sequence name, description, and id
@@ -101,7 +113,7 @@ sequence.
 """
 db.define_table('annotations',
 				 Field('annotation_name'),
-				 Field('annotation_location' , 'list:integer'),
+				 Field('annotation_location', 'list:integer'),
 				 Field('date_created', 'datetime'),
 				 Field('annotation_description', 'text'),
 				 Field('creating_user_id', 'reference auth_user')

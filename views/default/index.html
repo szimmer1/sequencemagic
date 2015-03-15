@@ -37,8 +37,9 @@
                 There are no entries related to {{=search_seq}}.
                 <br>{{=A('Upload your own %s sequence' % search_seq, _href=URL('default', 'upload'))}}
             {{pass}}
-            <br>
-            <p>{{=A('Home Page', _class = 'btn', _href=URL('default', 'index'))}}</p></br>
+            <div>
+            <a class="btn btn-primary" href="{{=URL('default', 'index')}}">Main Page</a>
+            </div>
         {{elif query is not None:}}
             {{for row in query:}}
                 {{all_descriptors = db(db.descriptor_table.id == row.descriptor_id).select(db.descriptor_table.ALL)}}
