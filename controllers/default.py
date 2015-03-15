@@ -123,6 +123,9 @@ def view():
       r = ""
       l = string.split(" ")
       for w in l:
+          if not isinstance(w,str):
+              continue
+          pass
           r += w[0].upper()
       return r
 
@@ -198,24 +201,12 @@ def view():
        if request.vars.user_id is not None:
             selected_user_id = request.vars.user_id
             user_chosen = True
-            # TODO select annotation list based on request.vars.user_id ~ possibly use a SQLFORM.grid ?
-            # annotation_list = db(db.annotation_to_descriptor.descriptor_id == desc_id).select().as_list()
-            annotation_list = [
-                {
-                    'annotation_name' : 'Test single annotation',
-                    'annotation_location' : [20],
-                    'date_created' : datetime.utcnow().strftime("%m/%d/%y"),
-                    'annotation_description' : 'A test annotation hard-coded in for now',
-                    'annotation_sequence' : 'ACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTG'
-                },
-                {
-                    'annotation_name' : 'Test multi annotation',
-                    'annotation_location' : [130, 200],
-                    'date_created' : datetime.utcnow().strftime("%m/%d/%y"),
-                    'annotation_description' : 'A test annotation hard-coded in for now',
-                    'annotation_sequence' : 'ACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTG'
-                }
-            ]
+
+            annotation_list = db(
+                (db.annotations.id.belongs(db.annotation_to_descriptor.descriptor_id == desc_id))
+                & (db.annotations.creating_user_id == selected_user_id)
+            ).select(db.annotations.ALL)
+
        else:
             pass
 
@@ -270,11 +261,10 @@ def upload_annotation():
     # response.menu = setResponseMenu('multiple', True)
 
     categories = []
-    for seq in db(db.descriptor_table).select(): #run through seq names
-        """if auth.user.first_name == seq.creating_user_id: #if they match curr users name append them for later
-            categories.append(seq.sequence_name)"""
-        if (seq.creating_user_id == auth.user_id):
-            categories.append(seq.sequence_name)
+    subscribed_descriptors = db(db.descriptor_to_user.user_id == auth.user_id).select(db.descriptor_to_user.descriptor_id)
+    for descriptor in subscribed_descriptors: #run through seq names
+        seq = db(db.descriptor_table.id == descriptor.descriptor_id).select(db.descriptor_table.sequence_name).first()
+        categories.append(seq.sequence_name)
 
     form = SQLFORM.factory(
         Field('seq_name', label=' Select A Sequence to Annotate', requires=IS_IN_SET(categories), required=True), # consists of only users own sequences

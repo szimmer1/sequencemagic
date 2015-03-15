@@ -119,6 +119,8 @@ db.define_table('annotations',
 				 Field('creating_user_id', 'reference auth_user')
 				 )
 
+db.annotations.creating_user_id.default = auth.user_id
+
 """Linker table for annotations and descriptors"""
 db.define_table('annotation_to_descriptor',
                 Field('descriptor_id', 'reference descriptor_table'),
