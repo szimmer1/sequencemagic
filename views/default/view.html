@@ -34,9 +34,26 @@
                             <div class="col-md-10 col-xs-10 annotations-view">
                                 {{if user_chosen:}}
                                     <div class="annotations-wrap">
-                                        {{for annotation in annotation_list:}}
-                                            <p>{{=annotation}}</p>
-                                        {{pass}}
+                                            <table class="table table-hover">
+                                                <thead></thead>
+                                                <tbody>
+                                                    {{for annotation in annotation_list:}}
+                                                    <tr>
+                                                        <td>{{=annotation.annotation_name}}<br>{{=annotation.date_created}}</td>
+                                                        <td>
+                                                            <a class="btn btn-primary" href="#">
+                                                                    Edit <i class="fa fa-wrench"></i>
+                                                            </a>
+                                                        </td>
+                                                        <td>
+                                                            <a class="btn btn-danger" onclick="return confirm('Are you sure?')" href="{{=URL('default', 'delete', vars=dict(annotation_id=annotation.id))}}">
+                                                                    <i class="fa fa-trash"></i>
+                                                            </a>
+                                                        </td>
+                                                    </tr>
+                                                    {{pass}}
+                                                </tbody>
+                                            </table>
                                     </div>
                                 {{else:}}
                                     <h3>Choose a user</h3>
