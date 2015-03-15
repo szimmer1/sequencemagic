@@ -123,6 +123,9 @@ def view():
       r = ""
       l = string.split(" ")
       for w in l:
+          if not isinstance(w,str):
+              continue
+          pass
           r += w[0].upper()
       return r
 
