@@ -43,7 +43,7 @@ def index():
        if request.args(0) != 'None':
            p = db(db.descriptor_to_user.user_id == request.args(0)).select()
            for row in p:
-<<<<<<< HEAD
+
                if row.user_id== auth.user_id:
                    authorized = True 
            
@@ -52,12 +52,12 @@ def index():
                    authorized = True               #(you can manually change it. this fixes that)
                
                
-=======
+
                if row.user_id == auth.user_id:
                    authorized = True
            """if p is None:
                session.flash = T("You need to subscribe")"""
->>>>>>> 07bded928f63b728bb84e090ef11ec8d75c47fb8
+
        else:
            session.flash = T("You need to login!")
 
