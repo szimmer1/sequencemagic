@@ -36,7 +36,7 @@ def setResponseMenu(ctrl, authorized):
         'index',
         'upload',
         'myindex',
-        'view'
+        'view',
     ]
     menu = [
         [T('Browse sequences'), False, URL('default', 'index'), []],
