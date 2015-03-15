@@ -21,10 +21,16 @@ def index():
        ctrl = 'myindex'
        header_text = "My sequences"
        if request.args(0) != 'None':
-           p = db(db.descriptor_table.creating_user_id == request.args(0)).select()
+           p = db(db.descriptor_to_user.user_id == request.args(0)).select()
            for row in p:
-               if row.creating_user_id == auth.user_id:
-                   authorized = True  
+               if row.user_id== auth.user_id:
+                   authorized = True 
+           
+           if not authorized: 
+               if request.args(0) == auth.user_id: #doing this to ensure the user is the one that the url says 
+                   authorized = True               #(you can manually change it. this fixes that)
+               
+               
        else:
            session.flash = T("You need to login!")
 
