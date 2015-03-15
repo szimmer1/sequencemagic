@@ -1,4 +1,14 @@
 {{extend 'layout.html'}}
 
 <h1>Upload a sequence</h1>
+<ul class="btn-group">
+    <a href="{{=URL('default', 'upload')}}">
+        <li id="form-upload" class="btn btn-primary {{if file_active:}}active{{pass}}">File upload</li>
+    </a>
+    <a href="{{=URL('default', 'upload', args=['man'])}}">
+        <li id="form-text" class="btn btn-primary {{if not file_active:}}active{{pass}}">Text upload</li>
+    </a>
+</ul>
+<div id="form-wrap" class="form-wrap">
 {{=form}}
+</div>

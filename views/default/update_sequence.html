@@ -1,0 +1,17 @@
+{{extend 'layout.html'}}
+
+<h1>Update a sequence</h1>
+<ul class="btn-group">
+    <a href="{{=URL('default', 'update_sequence')}}">
+        <li id="form-upload" class="btn btn-primary {{if del_active and not add_active:}}active{{pass}}">Delete Sequence</li>
+    </a>
+    <a href="{{=URL('default', 'update_sequence', args=['add'])}}">
+        <li id="form-text" class="btn btn-primary {{if add_active and not del_active:}}active{{pass}}">Add Sequence</li>
+    </a>
+    <a href="{{=URL('default', 'update_sequence', args=['replace'])}}">
+        <li id="form-text" class="btn btn-primary {{if not del_active and not add_active:}}active{{pass}}">Replace Existing Sequence</li>
+    </a>
+</ul>
+<div id="form-wrap" class="form-wrap">
+{{=form}}
+</div>

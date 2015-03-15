@@ -18,6 +18,7 @@ response.meta.generator = 'Web2py Web Framework'
 ## your http://google.com/analytics id
 response.google_analytics_id = None
 
+
 #########################################################################
 ## this is the main application menu add/remove items as required
 #########################################################################
@@ -34,21 +35,24 @@ def setResponseMenu(ctrl, authorized):
     ref = [
         'index',
         'upload',
-        'myindex'
+        'myindex',
+        'view',
     ]
     menu = [
         [T('Browse sequences'), False, URL('default', 'index'), []],
-        [T('Upload a sequence'), False, URL('default', 'upload'), []],
-        [T('My sequences'), False, URL('default', 'index', args=[auth.user_id]), []],
+        [T('Upload a sequence'), False, URL('default', 'upload'), []]
         ]
+    if auth.user is not None:
+        menu.append([T('My sequences'), False, URL('default', 'index', args=[auth.user_id]), []])
+    pass
     if ctrl is 'myindex':
         if authorized:
-            menu[ref.index(ctrl)][1] = True
+            menu[2][1] = True
         else:
             return menu
-        pass
+    elif len(menu) > ref.index(ctrl):
+        menu[ref.index(ctrl)][1] = True
     pass
-    menu[ref.index(ctrl)][1] = True
     return menu
 
 def _():

@@ -1,20 +1,63 @@
 {{extend 'layout.html'}}
 
     <div class="row">
-        {{if query is not None:}}
+        <div class="col-md-12">
+            <h1>{{=header_text}}</h1>
+        </div>
+    </div>
+    <div class="row">
+        {{if header_text != 'Search Results' and header_text != 'My sequences':}}
+            <p>{{=FORM(TABLE(TR(TD(INPUT(_name='search', type='search', _placeholder="Search for a sequence")))),_action=URL('default', 'search'),_method='get')}}</p>
+        {{pass}}
+        {{if search:}}
+            {{if search_pages is not None:}}
+                {{for row in search_pages:}}
+                    <div class="col-md-4">
+                            <div class="thumbnail">
+                                <div class="caption">
+                                    <h3>{{=row.sequence_name}}</h3>
+                                    <p>{{=row.sequence_description}}</p>
+                                    <p>
+                                        <a class="btn btn-primary" href="{{=URL('default', 'view', args=[row.id])}}">
+                                            View&nbsp;&nbsp;<i class="fa fa-eye"></i>
+                                        </a>
+                                        {{if authorized:}}
+                                            {{if row.creating_user_id == auth.user_id:}}
+                                                <a class="btn btn-danger" onclick="return confirm('Are you sure?')" href="{{=URL('default', 'delete', vars=dict(desc_id=row.id))}}">
+                                                    <i class="fa fa-trash"></i>
+                                                </a>
+                                            {{pass}}
+                                        {{pass}}
+                                   </p>
+                                </div>
+                            </div>
+                        </div>
+                {{pass}}
+            {{else:}}
+                There are no entries related to {{=search_seq}}.
+                <br>{{=A('Upload your own %s sequence' % search_seq, _href=URL('default', 'upload'))}}
+            {{pass}}
+            <div>
+            <a class="btn btn-primary" href="{{=URL('default', 'index')}}">Main Page</a>
+            </div>
+        {{elif query is not None:}}
             {{for row in query:}}
-                {{all_descriptors = db(db.descriptor_table.seq_id == row.descriptor_id).select(db.descriptor_table.ALL)}}
+                {{all_descriptors = db(db.descriptor_table.id == row.descriptor_id).select(db.descriptor_table.ALL)}}
                     {{for descriptor in all_descriptors:}}
                         <div class="col-md-4">
                             <div class="thumbnail">
                                 <div class="caption">
                                     <h3>{{=descriptor.sequence_name}}</h3>
                                     <p>{{=descriptor.sequence_description}}</p>
-                                    <p>
-                                        {{=A('View', _class="btn btn-primary", _href=URL('default', 'view', args=[descriptor.id]))}}
+                                    <p> 
+                                        <a class="btn btn-primary" href="{{=URL('default', 'view', args=[descriptor.id])}}">
+                                            View&nbsp;&nbsp;<i class="fa fa-magic"></i>
+                                        </a>
                                         {{if authorized:}}
                                             {{if descriptor.creating_user_id == auth.user_id:}}
-                                                {{=A('Edit', _class="btn btn-primary", _href="#")}}
+                                                <a class="btn btn-danger" onclick="return confirm('Are you sure?')" href="{{=URL('default', 'delete', vars=dict(desc_id=descriptor.id))}}">
+                                                    <i class="fa fa-trash"></i>
+                                                </a>
                                             {{pass}}
                                         {{pass}}
                                    </p>
@@ -28,17 +71,20 @@
                     <div class="col-md-4">
                         <div class="thumbnail">
                             <div class="caption">
+                                <a class="btn-subscribe pull-right" href="{{=URL('default', 'subscribe', args=[descriptor.id])}}">
+                                    <i class="fa fa-flag"></i>
+                                </a>
                                 <h3>{{=descriptor.sequence_name}}</h3>
                                 <p>{{=descriptor.sequence_description}}</p>
                                 <p>
-                                    {{=A('View', _class="btn btn-primary", _href=URL('default', 'view', args=[descriptor.id]))}}
-                                    {{if authorized:}}
-                                        {{=A('Edit', _class="btn btn-primary", _href="#")}}
-                                    {{pass}}
+                                    <a class="btn btn-primary" href="{{=URL('default', 'view', args=[descriptor.id])}}">
+                                            View&nbsp;&nbsp;<i class="fa fa-magic"></i>
+                                    </a>
                                     {{if descriptor.creating_user_id == auth.user_id:}}
-                                                {{=A('Edit', _class="btn btn-primary", _href="#")}}
+                                                <a class="btn btn-danger" onclick="return confirm('Are you sure?')" href="{{=URL('default', 'delete', vars=dict(desc_id=descriptor.id))}}">
+                                                    <i class="fa fa-trash"></i>
+                                                </a>
                                     {{pass}}
-                                    {{=A('Subscribe', _class="btn btn-primary", _href=URL('default', 'subscribe', args=[descriptor.seq_id]))}}
                                 </p>
                             </div>
                         </div>
