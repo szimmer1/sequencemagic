@@ -202,13 +202,35 @@ def view():
             selected_user_id = long(request.vars.user_id+"L")
             user_chosen = True
        pass
-       annotation_list = {}
-       for user in db(db.auth_user).select():
-          annotation_list[user.id] = db(
+       annotation_list = {} #(dict)
+       active_id_list = []  #(list)
+       for active_annotation in db(db.active_annotations.descriptor_id==desc_id).select():
+           active_id_list.append(active_annotation.active_id)
+	   #DEBUG DEBUG redirect (URL('default', 'index', vars = {'list':active_id_list}))
+       #for user in db(db.auth_user).select():
+               
+	   '''annotation_list[user.id] = db(
                                            (db.annotations.id.belongs(db.annotation_to_descriptor.descriptor_id == desc_id))
                                            & (db.annotations.creating_user_id == user.id)
                                        ).select(db.annotations.ALL)
-       pass
+       '''
+       ''' annotation_list[user.id] = db(
+                                        (db.annotations.id in active_id_list) & 
+                                        #(db.annotations.id.belongs(db.active_annotations.descriptor_id==desc_id))
+                                        (db.annotations.creating_user_id==user.id)
+										).select()
+       '''
+       for active_id in active_id_list:
+           annotation_row = db(db.annotations.id==active_id).select()
+           for annotation in annotation_row:
+               if annotation.creating_user_id in annotation_list: 
+     			   annotation_list[annotation.creating_user_id].append(db(db.annotations.id==active_id).select())
+               else:
+			       annotation_list[annotation.creating_user_id] = db(db.annotations.id==active_id).select()
+	   pass
+
+	   
+	   
 
    return locals()
 

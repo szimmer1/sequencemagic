@@ -106,6 +106,7 @@ def update_active_annotations(new_id, new_name, desc_id):
 									descriptor_id = desc_id
 									)
 	#TODO UPDATE DELETES TO WORK WITH ACTIVE ANNOTATIONS
+	
 
 """
 sequence table, which contain all the sequences
