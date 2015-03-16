@@ -145,3 +145,11 @@ CREATE TABLE active_annotations(
     descriptor_id INTEGER REFERENCES descriptor_table (id) ON DELETE CASCADE
 );
 faked!
+timestamp: 2015-03-16T18:08:42.661772
+CREATE TABLE active_annotations(
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    annotation_name CHAR(512),
+    active_id INTEGER REFERENCES annotations (id) ON DELETE CASCADE,
+    descriptor_id INTEGER REFERENCES descriptor_table (id) ON DELETE CASCADE
+);
+faked!
