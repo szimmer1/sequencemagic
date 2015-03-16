@@ -391,9 +391,11 @@ def delete():
         	db(db.annotation_to_descriptor.annotation_id==annot_id).delete()
 	'''deleting single annotation with given annotation id'''
     if annotation_id:
+		desc_id=db(db.active_annotations.active_id==annotation_id).select().first().descriptor_id
 		db(db.active_annotations.active_id==annotation_id).delete()
 		db(db.annotation_to_descriptor.annotation_id==annotation_id).delete()
 		db(db.annotations.id==annotation_id).delete()
+		redirect(URL('default', 'view', args=[desc_id]))
 
     redirect (URL('default', 'index', args=[2]))
 
