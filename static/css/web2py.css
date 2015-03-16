@@ -343,7 +343,6 @@ li.w2p_grid_breadcrumb_elem {
 .col-md-12.plasmid-wrapper, .col-xs-12.plasmid-wrapper {
     text-align: center;
     padding: 20px;
-    margin: 20px 0;
 }
 .col-md-2.user-nav, .col-xs-2.user-nav {
     padding-right: 0;
@@ -355,6 +354,7 @@ li.w2p_grid_breadcrumb_elem {
 }
 .col-md-12.add-annotation-wrapper, .col-xs-12.add-annotation-wrapper {
     margin: 20px;
+    margin-top: 0;
     padding-left: 15%;
 }
 .btn.btn-user, .btn.btn-user > a {
