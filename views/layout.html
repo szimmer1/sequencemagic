@@ -30,7 +30,7 @@
         device-width: Occupy full width of the screen in its current orientation
         initial-scale = 1.0 retains dimensions instead of zooming out if page height > device height
         user-scalable = yes allows the user to zoom in -->
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
 
   <link rel="shortcut icon" href="{{=URL('static','images/favicon.ico')}}" type="image/x-icon">
   <link rel="apple-touch-icon" href="{{=URL('static','images/favicon.png')}}">
@@ -111,7 +111,7 @@
       {{if response.title:}}
         <div class="col-md-12">
             <div class="page-header">
-                <h1>
+                <h1 class="hidden-xs">
                     SequenceMagic
                     <small>{{=response.subtitle or ''}}</small>
                 </h1>
@@ -136,7 +136,7 @@
         {{pass}}
 
         <!-- bootstrap the angular app here -->
-        <div class="{{=middle_columns}}" ng-app="sequencemagic">
+        <div class="{{=middle_columns}}">
             {{block center}}
             {{include}}
             {{end}}

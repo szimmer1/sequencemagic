@@ -43,10 +43,21 @@ def index():
        if request.args(0) != 'None':
            p = db(db.descriptor_to_user.user_id == request.args(0)).select()
            for row in p:
+
+               if row.user_id== auth.user_id:
+                   authorized = True 
+           
+           if not authorized: 
+               if request.args(0) == auth.user_id: #doing this to ensure the user is the one that the url says 
+                   authorized = True               #(you can manually change it. this fixes that)
+               
+               
+
                if row.user_id == auth.user_id:
                    authorized = True
            """if p is None:
                session.flash = T("You need to subscribe")"""
+
        else:
            session.flash = T("You need to login!")
 
@@ -107,6 +118,17 @@ def edit():
     return locals()
 
 def view():
+   # Helper functions
+   def abbreviation(string):
+      r = ""
+      l = string.split(" ")
+      for w in l:
+          if not isinstance(w,str):
+              continue
+          pass
+          r += w[0].upper()
+      return r
+
    """
    Allows a user to visualize a particular sequence with it's annotations,
    if any are present. Requires seq they want to see to be passed via URL,
@@ -114,7 +136,8 @@ def view():
    """
    annotationList = sequence_row = seq = seq_type = desc_name = \
        desc_description = date_created = desc_author = list_of_subscriptors = \
-       seq_length = annotation_list = plasmid_name = None
+       seq_length = annotation_list = plasmid_name = user_chosen = \
+       selected_user_id = None
    found_sequence = False
    
    desc_id = request.args(0) or None
@@ -137,20 +160,7 @@ def view():
    date_created = desc_row.date_created
    seq_id = desc_row.seq_id
    
-   # list_of_subscriptors = db((db.descriptor_to_user.descriptor_id == desc_id) & (db.descriptor_to_user.user_id == db.auth_user.id)).select(db.auth_user.first_name, db.auth_user.last_name, db.auth_user.email).as_list()
-   list_of_subscriptors = [
-       {
-           'first_name' : 'Shahar',
-           'last_name' : 'Zimmerman',
-           'email' : 'szimmer1@ucsc.edu'
-       },
-       {
-           'first_name' : 'Roger',
-           'last_name' : 'Tester',
-           'email' : 'roger@tester.com'
-       }
-   ]
-   list_of_subscriptors = json.dumps(list_of_subscriptors)
+   list_of_subscriptors = db((db.descriptor_to_user.descriptor_id == desc_id) & (db.descriptor_to_user.user_id == db.auth_user.id)).select(db.auth_user.ALL)
 
    sequence_row = db(db.sequences.id == seq_id).select().first()
    if sequence_row.seq is not None:
@@ -167,7 +177,6 @@ def view():
        seq = 'Sequence info not found'
        return locals()
 
-
    # authorize the user to edit
    authorized = False
    if seq is not None:
@@ -177,10 +186,7 @@ def view():
              authorized = True
              header_text = sequence_name = p.sequence_name
              if len(sequence_name.split(" ")) > 1:
-                 plasmid_name = ""
-                 list = sequence_name.split(" ")
-                 for word in list:
-                     plasmid_name += word[0].upper()
+                 plasmid_name = abbreviation(sequence_name)
              else:
                  plasmid_name = sequence_name
       else:
@@ -192,36 +198,20 @@ def view():
    if authorized:
        # get sequence length and annotation data
        seq_length = len(seq.replace(" ", ""))
-       # annotation_list = db(db.annotation_to_descriptor.descriptor_id == desc_id).select().as_list()
-       annotation_list = [
-           {
-               'annotation_name' : 'Test single annotation',
-               'annotation_location' : [20],
-               'date_created' : datetime.utcnow().strftime("%m/%d/%y"),
-               'annotation_description' : 'A test annotation hard-coded in for now',
-               'annotation_sequence' : 'ACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTG'
-           },
-           {
-               'annotation_name' : 'Test multi annotation',
-               'annotation_location' : [130, 200],
-               'date_created' : datetime.utcnow().strftime("%m/%d/%y"),
-               'annotation_description' : 'A test annotation hard-coded in for now',
-               'annotation_sequence' : 'ACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTG'
-           }
-       ]
-       annotation_list = json.dumps(annotation_list)
+       if request.vars.user_id is not None:
+            selected_user_id = long(request.vars.user_id+"L")
+            user_chosen = True
+       pass
+       annotation_list = {}
+       for user in db(db.auth_user).select():
+          annotation_list[user.id] = db(
+                                           (db.annotations.id.belongs(db.annotation_to_descriptor.descriptor_id == desc_id))
+                                           & (db.annotations.creating_user_id == user.id)
+                                       ).select(db.annotations.ALL)
+       pass
 
    return locals()
 
-   """suscriptions_of_user= db((db.descriptor_to_user.user_id==auth.user_id)&(db.descriptor_to_user.descriptor_id==db.descriptor_table.id)&(db.descriptor_table.seq_id == db.sequences.id)).select(db.descriptor_table.ALL)
-   {{if len(suscriptions_of_user) > 0:}}
-                <ul>Im suscribed to :
-                    {{for p_2 in suscriptions_of_user:}}
-                        <li>{{=p_2.sequence_name}}</li>
-
-                    {{pass}}
-                </ul>
-            {{pass}} THIS IS THE QUERY AND THE PART TO PUT DIRECTLY IN THE VIEW."""
 
 @auth.requires_login()
 def upload():
@@ -270,16 +260,16 @@ def upload_annotation():
     # response.menu = setResponseMenu('multiple', True)
 
     categories = []
-    for seq in db(db.descriptor_table).select(): #run through seq names
-        """if auth.user.first_name == seq.creating_user_id: #if they match curr users name append them for later
-            categories.append(seq.sequence_name)"""
-        if (seq.creating_user_id == auth.user_id):
-            categories.append(seq.sequence_name)
+    subscribed_descriptors = db(db.descriptor_to_user.user_id == auth.user_id).select(db.descriptor_to_user.descriptor_id)
+    for descriptor in subscribed_descriptors: #run through seq names
+        seq = db(db.descriptor_table.id == descriptor.descriptor_id).select(db.descriptor_table.sequence_name).first()
+        categories.append(seq.sequence_name)
 
     form = SQLFORM.factory(
         Field('seq_name', label=' Select A Sequence to Annotate', requires=IS_IN_SET(categories), required=True), # consists of only users own sequences
         Field('annotation_name', requires=IS_NOT_EMPTY()),
         Field('annotation_position', 'list:integer'),
+        Field('length', 'integer'),
         Field('description', 'text')
     )
 

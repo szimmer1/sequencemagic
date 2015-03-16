@@ -51,7 +51,7 @@
                                     <p>{{=descriptor.sequence_description}}</p>
                                     <p> 
                                         <a class="btn btn-primary" href="{{=URL('default', 'view', args=[descriptor.id])}}">
-                                            View&nbsp;&nbsp;<i class="fa fa-eye"></i>
+                                            View&nbsp;&nbsp;<i class="fa fa-magic"></i>
                                         </a>
                                         {{if authorized:}}
                                             {{if descriptor.creating_user_id == auth.user_id:}}
@@ -78,7 +78,7 @@
                                 <p>{{=descriptor.sequence_description}}</p>
                                 <p>
                                     <a class="btn btn-primary" href="{{=URL('default', 'view', args=[descriptor.id])}}">
-                                            View&nbsp;&nbsp;<i class="fa fa-eye"></i>
+                                            View&nbsp;&nbsp;<i class="fa fa-magic"></i>
                                     </a>
                                     {{if descriptor.creating_user_id == auth.user_id:}}
                                                 <a class="btn btn-danger" onclick="return confirm('Are you sure?')" href="{{=URL('default', 'delete', vars=dict(desc_id=descriptor.id))}}">

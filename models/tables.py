@@ -83,6 +83,7 @@ def insert_annotation(form):
                               annotation_location = form.vars.annotation_position,
                               date_created = datetime.utcnow(),
                               annotation_description = form.vars.description,
+                              annotation_length = form.vars.length
                               )
    descriptor_id = db(db.descriptor_table.sequence_name == form.vars.seq_name).select().first().id
    update_annotation_to_descriptor(annotation_id, descriptor_id)
@@ -139,8 +140,11 @@ db.define_table('annotations',
 				 Field('annotation_location', 'list:integer'),
 				 Field('date_created', 'datetime'),
 				 Field('annotation_description', 'text'),
+                 Field('annotation_length', 'integer'),
 				 Field('creating_user_id', 'reference auth_user')
 				 )
+
+db.annotations.creating_user_id.default = auth.user_id
 
 """Linker table for annotations and descriptors"""
 db.define_table('annotation_to_descriptor',
