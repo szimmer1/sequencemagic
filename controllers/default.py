@@ -90,6 +90,14 @@ def subscribe():
     redirect(URL('default', 'index'))
 
 @auth.requires_login()
+def unsubscribe():
+	if db(  (db.descriptor_table.id==request.args(0) & (db.descriptor_table.creating_user_id = auth.user_id)):
+		session.flash = T("You can not unsubscribe from a sequence you created.")
+		redirect(URL('default', 'index'))
+	else:
+		db((db.descriptor_to_user.descriptor_id==request.args(0))&(db.descriptor_to_user.user_id==auth.user_id)).delete()
+
+@auth.requires_login()
 def edit():
     # authorize the user to edit
     authorized = False
