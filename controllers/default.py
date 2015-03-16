@@ -91,7 +91,7 @@ def subscribe():
 
 @auth.requires_login()
 def unsubscribe():
-	if db(  (db.descriptor_table.id==request.args(0) & (db.descriptor_table.creating_user_id = auth.user_id)):
+	if db((db.descriptor_table.id==request.args(0)) & (db.descriptor_table.creating_user_id == auth.user_id)):
 		session.flash = T("You can not unsubscribe from a sequence you created.")
 		redirect(URL('default', 'index'))
 	else:
