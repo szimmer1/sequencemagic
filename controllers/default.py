@@ -91,11 +91,14 @@ def subscribe():
 
 @auth.requires_login()
 def unsubscribe():
-	if db((db.descriptor_table.id==request.args(0)) & (db.descriptor_table.creating_user_id == auth.user_id)):
-		session.flash = T("You can not unsubscribe from a sequence you created.")
-		redirect(URL('default', 'index'))
+	items = db((db.descriptor_table.id==request.args(0))).select()
+	for item in items:
+		if item.creating_user_id==auth.user_id:
+			session.flash = T("You can not unsubscribe from a sequence you created.")
+			redirect(URL('default', 'index', vars={'test':'test'}))
 	
 	db((db.descriptor_to_user.descriptor_id==request.args(0))&(db.descriptor_to_user.user_id==auth.user_id)).delete()
+	redirect(URL('default', 'index', args = [auth.user_id]))
 
 @auth.requires_login()
 def edit():
@@ -397,7 +400,7 @@ def delete():
 		db(db.annotations.id==annotation_id).delete()
 		redirect(URL('default', 'view', args=[desc_id]))
 
-    redirect (URL('default', 'index', args=[2]))
+    redirect (URL('default', 'index', args=[auth.user_id]))
 
     return
 
