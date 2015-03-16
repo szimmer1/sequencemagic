@@ -123,3 +123,25 @@ success!
 timestamp: 2015-03-15T14:37:25.721277
 ALTER TABLE active_annotations ADD descriptor_id INTEGER REFERENCES descriptor_table (id) ON DELETE CASCADE;
 success!
+timestamp: 2015-03-16T11:56:47.591611
+CREATE TABLE active_annotations(
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    annotation_name CHAR(512),
+    active_id INTEGER REFERENCES annotations (id) ON DELETE CASCADE,
+    descriptor_id INTEGER REFERENCES descriptor_table (id) ON DELETE CASCADE
+);
+timestamp: 2015-03-16T11:58:11.769120
+CREATE TABLE active_annotations(
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    annotation_name CHAR(512),
+    active_id INTEGER REFERENCES annotations (id) ON DELETE CASCADE,
+    descriptor_id INTEGER REFERENCES descriptor_table (id) ON DELETE CASCADE
+);
+timestamp: 2015-03-16T12:04:19.657203
+CREATE TABLE active_annotations(
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    annotation_name CHAR(512),
+    active_id INTEGER REFERENCES annotations (id) ON DELETE CASCADE,
+    descriptor_id INTEGER REFERENCES descriptor_table (id) ON DELETE CASCADE
+);
+faked!
