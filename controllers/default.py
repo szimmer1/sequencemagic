@@ -365,7 +365,7 @@ def update_sequence():
 
     form = SQLFORM.factory(
         Field('name', label='Select a Sequence', requires=IS_IN_SET(categories), required=True),
-        Field('position', 'list:integer', label = 'Location to Delete')
+        Field('position', 'list:integer', label='Location to Delete')
     )
 
     if request.args(0)=='add':
@@ -374,7 +374,7 @@ def update_sequence():
         form = SQLFORM.factory(
             Field('name', label='Select a Sequence to Add to', requires=IS_IN_SET(categories), required=True),
             Field('seqs', 'text', label='Additional Sequence to Add', requires=IS_NOT_EMPTY()),
-            Field('position', 'list:integer', label = 'Position to Add Sequence')
+            Field('position', 'list:integer', label='Position(s) to Insert Sequence')
         )
     if request.args(0)=='replace':
         del_active = False
@@ -382,7 +382,7 @@ def update_sequence():
         form = SQLFORM.factory(
             Field('name', label='Select a Sequence', requires=IS_IN_SET(categories), required=True),
             Field('seqs', 'text', label='Replacement Sequence', requires=IS_NOT_EMPTY()),
-            Field('position', 'list:integer', label = 'Positions to replace with above Sequence')
+            Field('position', 'list:integer', label='Position(s) to replace with above Sequence')
         )
 
     if form.process().accepted:
