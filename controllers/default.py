@@ -211,10 +211,11 @@ def view():
        for active_id in active_id_list:
            annotation_row = db(db.annotations.id==active_id).select()
            for annotation in annotation_row:
-               if annotation.creating_user_id in annotation_list: 
-     			   annotation_list[annotation.creating_user_id].append(db(db.annotations.id==active_id).select())
+               #if annotation.creating_user_id in annotation_list: 
+               if annotation_list.has_key(annotation.creating_user_id):
+                   annotation_list[annotation.creating_user_id].append(db(db.annotations.id==active_id).select().first())
                else:
-			       annotation_list[annotation.creating_user_id] = db(db.annotations.id==active_id).select()
+			       annotation_list[annotation.creating_user_id] =[db(db.annotations.id==active_id).select().first()]
 	   pass
 
 
