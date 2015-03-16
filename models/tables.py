@@ -110,8 +110,7 @@ def update_active_annotations(new_id, new_name, desc_id):
 
 def parseSequence(filetype, filename, seq_id):
 	SEQFILE = open(os.path.join(request.folder+'static/uploads/'+filename))
-
-	if filetype == FASTA:
+	if filetype == 'FASTA':
 		sequence = ''
 		firstseq = False
 		for line in SEQFILE:
@@ -185,7 +184,6 @@ db.define_table('active_annotations',
 				Field('annotation_name'),
 				Field('active_id', 'reference annotations'),
 				Field('descriptor_id', 'reference descriptor_table'),
-                fake_migrate=True
 				)
 
 """Linker table for annotations and descriptors"""
@@ -194,23 +192,3 @@ db.define_table('annotation_to_descriptor',
                 Field('annotation_id', 'reference annotations')
                 )
 
-"""Here is a FASTA reader method that we may need in a controller.
-I used this for my BME 160 class so it will probably have to do be modified
-but it doesn't hurt to have as reference
-with open(self.fname) as fileH:
-   header=''
-   sequence=''
-   
-   line = fileH.readline()
-   while not line.startswith('>'):
-      line = fileH.readline()
-   header = line[1:].rstrip()
-   for line in fileH:
-      if line.startswith('>'):
-         yield header,sequence
-         header = line[1:].rstrip()
-         sequence = ''
-      else:
-         sequence += ''.join(line.rstrip().split()).upper()
-      yield header, sequence
-"""
