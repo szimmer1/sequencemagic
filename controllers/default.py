@@ -225,7 +225,7 @@ def view():
 	      annotation_id_list.append(annotation.annotation_id)
        annotation_id_list.sort(reverse=True)
        for annot_id in annotation_id_list:
-	      annotation_history.append(db(db.annotations.id==annot_id).select())
+	      annotation_history.append(db(db.annotations.id==annot_id).select().first())
 
 	   
 
@@ -347,6 +347,8 @@ def delete():
             os.remove(request.folder+'static/uploads/'+seq_file_name)
         # delete descriptor
         db(db.descriptor_table.id==desc_id).delete()
+        #delete active_annotation tuple
+        db(db.active_annotations.descriptor_id==desc_id).delete()
         # delete annotation tuples
         annotations = db(db.annotation_to_descriptor.descriptor_id==desc_id).select()
     	for item in annotations:
@@ -356,6 +358,7 @@ def delete():
         	db(db.annotation_to_descriptor.annotation_id==annot_id).delete()
 	'''deleting single annotation with given annotation id'''
     if annotation_id:
+		db(db.active_annotations.active_id==annotation_id).delete()
 		db(db.annotation_to_descriptor.annotation_id==annotation_id).delete()
 		db(db.annotations.id==annotation_id).delete()
 

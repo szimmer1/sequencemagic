@@ -96,12 +96,12 @@
             </div>
 
             <div class="col-md-3 col-xs-12">
+				<h4> Update History </h4>
 				{{for annotation in annotation_history:}}
 				<li>
-				{{=annotation}}
+				{{=annotation.annotation_name}}<br>{{=annotation.date_created}}<br>{{=annotation.creating_user_id}}
 				</li>
 				{{pass}}
-                <p>It would be cool if we had an update stream right over here</p>
             </div>
 
         <!-- Custom plasmid styles -->
