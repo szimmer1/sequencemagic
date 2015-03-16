@@ -16,6 +16,21 @@
                             <plasmidtrack id="t1">
                                 <tracklabel id="seq-name"
                                             text="{{=plasmid_name}}"></tracklabel>
+                                <trackscale class="scale-major" interval="50" showlabels="1" labelclass="scale"></trackscale>
+                                {{if annotation_list is not None:}}
+                                {{counter=0}}
+                                {{for userid, annotations in annotation_list.iteritems():}}
+                                    <!-- set user-specific classes -->
+                                    {{for annotation in annotations:}}
+                                        {{for position in annotation.annotation_location:}}
+                                        <trackmarker class="marker-{{=counter}}" start="{{=position}}" end="{{=(position + annotation.annotation_length)}}">
+                                            <markerlabel class="mlabel" text="{{=annotation.annotation_name}}" vadjust="50" type="path"></markerlabel>
+                                        </trackmarker>
+                                        {{pass}}
+                                    {{pass}}
+                                    {{counter+=1}}
+                                {{pass}}
+                                {{pass}}
                             </plasmidtrack>
                         </plasmid>
                     </div>
@@ -33,7 +48,7 @@
                             <div class="col-md-2 col-xs-2 user-nav">
                                 <ul class="nav nav-tabs nav-stacked">
                                     {{for index, user in enumerate(list_of_subscriptors):}}
-                                        <li class="btn btn-user btn-{{=index}}{{if str(user.id) == selected_user_id:}} active-button{{pass}}">
+                                        <li class="btn btn-user btn-{{=index}}{{if user.id == selected_user_id:}} active-button{{pass}}">
                                             <a href="{{=URL('default', 'view', args=[desc_id], vars=dict(user_id=user.id))}}">{{=abbreviation(user.first_name + " " + user.last_name)}}</a>
                                         </li>
                                     {{pass}}
@@ -45,7 +60,8 @@
                                             <table class="table table-hover">
                                                 <thead></thead>
                                                 <tbody>
-                                                    {{for annotation in annotation_list:}}
+                                                    {{if len(annotation_list[selected_user_id]) > 0:}}
+                                                    {{for annotation in annotation_list[selected_user_id]:}}
                                                     <tr>
                                                         <td>{{=annotation.annotation_name}}<br>{{=annotation.date_created}}</td>
                                                         <td>
@@ -59,6 +75,9 @@
                                                             </a>
                                                         </td>
                                                     </tr>
+                                                    {{pass}}
+                                                    {{else:}}
+                                                    <h3>This person hasn't added any annotations yet</h3>
                                                     {{pass}}
                                                 </tbody>
                                             </table>
@@ -90,6 +109,17 @@
             }
             #seq-name {
                 font-size: 25px;
+            }
+            .scale-major {
+                stroke: #000;
+            }
+            .scale {
+                fill: #888888;
+            }
+            svg {
+                width: 500px;
+                display: inline-block;
+                text-align: center;
             }
         </style>
 

@@ -373,6 +373,9 @@ li.w2p_grid_breadcrumb_elem {
     background: #1abc9c;
     border: #1abc9c;
 }
+.marker-0 {
+    fill: #1abc9c;
+}
 .btn.btn-user.btn-1, .btn.btn-user.btn-1 > a {
     background: #57d68d;
     border: #57d68d;
