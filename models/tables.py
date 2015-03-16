@@ -108,6 +108,7 @@ def update_active_annotations(new_id, new_name, desc_id):
 	#TODO UPDATE DELETES TO WORK WITH ACTIVE ANNOTATIONS
 	
 
+
 """
 sequence table, which contain all the sequences
 a user has chosen to enter.
@@ -169,7 +170,8 @@ Used to generate annotation groups for versioning
 db.define_table('active_annotations',
 				Field('annotation_name'),
 				Field('active_id', 'reference annotations'),
-				Field('descriptor_id', 'reference descriptor_table')
+				Field('descriptor_id', 'reference descriptor_table'),
+                fake_migrate=True
 				)
 
 """Linker table for annotations and descriptors"""

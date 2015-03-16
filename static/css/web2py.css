@@ -343,7 +343,6 @@ li.w2p_grid_breadcrumb_elem {
 .col-md-12.plasmid-wrapper, .col-xs-12.plasmid-wrapper {
     text-align: center;
     padding: 20px;
-    margin: 20px 0;
 }
 .col-md-2.user-nav, .col-xs-2.user-nav {
     padding-right: 0;
@@ -355,6 +354,7 @@ li.w2p_grid_breadcrumb_elem {
 }
 .col-md-12.add-annotation-wrapper, .col-xs-12.add-annotation-wrapper {
     margin: 20px;
+    margin-top: 0;
     padding-left: 15%;
 }
 .btn.btn-user, .btn.btn-user > a {
@@ -380,15 +380,30 @@ li.w2p_grid_breadcrumb_elem {
     background: #57d68d;
     border: #57d68d;
 }
+.marker-1 {
+    fill: #57d68d;
+}
 .btn.btn-user.btn-2, .btn.btn-user.btn-2 > a {
     background: #5cace2;
     border: #5cace2;
+}
+.marker-2 {
+    fill: #5cace2;
 }
 .btn.btn-user.btn-3, .btn.btn-user.btn-3 > a {
     background: #9b59b6;
     border: #9b59b6;
 }
+.marker-3 {
+    fill: #9b59b6;
+}
 .btn.btn-user.btn-4, .btn.btn-user.btn-4 > a {
     background: #5c6d7e;
     border: #5c6d7e;
+}
+.marker-4 {
+    fill: #5c6d7e;
+}
+.marker {
+    opacity: 0.5;
 }
