@@ -122,6 +122,8 @@ def view():
    def abbreviation(string):
       r = ""
       l = string.split(" ")
+      if len(l) < 2:
+          return string
       for w in l:
           if not isinstance(w,str):
               continue
