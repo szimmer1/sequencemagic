@@ -31,13 +31,36 @@ def update_existing_sequence(form,flag):
     existing_desc_row = db(db.descriptor_table.sequence_name == form.vars.name).select().first().seq_id
     existing_seq_row = db(db.sequences.id == existing_desc_row).select().first()
     existing_seq = existing_seq_row.seq
-    # still need to access form.vars.position
-    if flag == 'del':
-        new_seq = existing_seq[0:]
-        new_seq += existing_seq[:]
+    # make list of ints because form.vars.position is a string
+    position_list = []
+    for pos in form.vars.position:
+        position_list.append(int(pos))
+
+    if flag == 'del': # only allowing for single bases, one substring, or multiple substrings
+        if len(position_list) == 1: # deleting single base
+            new_seq = existing_seq[0:position_list[0]]
+            new_seq += existing_seq[position_list[0]+1:]
+        elif len(position_list) % 2 == 0: # deleting at least one substring
+            seqs_to_del = []
+            new_seq = existing_seq
+            for pos in range(0, len(position_list),2): # first get all instances of string
+                pos1 = position_list[pos]
+                pos2 = position_list[pos+1]
+                del_seq = existing_seq[pos1:pos2+1]
+                seqs_to_del.append(del_seq)
+            for seq in seqs_to_del: # now replace by empty string
+                new_seq = new_seq.replace(seq,'',1)
         existing_seq_row.update_record(seq=new_seq)
+
     elif flag == 'add':
-        pass
+        if len(position_list) == 1: # adding in sequence in only one position
+            new_seq = existing_seq[0:position_list[0]+1]
+            new_seq += form.vars.seqs
+            new_seq += existing_seq[position_list[0]+1:]
+        elif len(position_list) > 1: # adding after more than one position
+            pass
+        existing_seq_row.update_record(seq=new_seq)
+
     elif flag == 'replace':
         pass
 
@@ -60,13 +83,29 @@ def insert_annotation(form):
                               annotation_location = form.vars.annotation_position,
                               date_created = datetime.utcnow(),
                               annotation_description = form.vars.description,
+                              annotation_length = form.vars.length
                               )
    descriptor_id = db(db.descriptor_table.sequence_name == form.vars.seq_name).select().first().id
    update_annotation_to_descriptor(annotation_id, descriptor_id)
+   annotation_name = form.vars.annotation_name
+   update_active_annotations(annotation_id,annotation_name , descriptor_id)
    return descriptor_id
 
 def update_annotation_to_descriptor(annotation_id, descriptor_id):
    db.annotation_to_descriptor.insert(annotation_id = annotation_id, descriptor_id = descriptor_id)
+
+def update_active_annotations(new_id, new_name, desc_id):
+	item = db((db.active_annotations.annotation_name==new_name) & (
+		db.active_annotations.descriptor_id == desc_id)).select().first()
+	if item:	
+		db((db.active_annotations.annotation_name==new_name) &(
+			db.active_annotations.descriptor_id == desc_id)).update(active_id=new_id)
+	else:
+		db.active_annotations.insert(active_id = new_id, 
+									annotation_name = new_name,
+									descriptor_id = desc_id
+									)
+	#TODO UPDATE DELETES TO WORK WITH ACTIVE ANNOTATIONS
 
 """
 sequence table, which contain all the sequences
@@ -116,8 +155,21 @@ db.define_table('annotations',
 				 Field('annotation_location', 'list:integer'),
 				 Field('date_created', 'datetime'),
 				 Field('annotation_description', 'text'),
-				 Field('creating_user_id', 'reference auth_user')
+                 Field('annotation_length', 'integer'),
+				 Field('creating_user_id', 'reference auth_user'),
 				 )
+db.annotations.creating_user_id.default = auth.user_id
+
+'''
+active_annotations
+creates an index for each unique annotation name.
+Used to generate annotation groups for versioning
+'''
+db.define_table('active_annotations',
+				Field('annotation_name'),
+				Field('active_id', 'reference annotations'),
+				Field('descriptor_id', 'reference descriptor_table')
+				)
 
 """Linker table for annotations and descriptors"""
 db.define_table('annotation_to_descriptor',

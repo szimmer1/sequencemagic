@@ -123,6 +123,9 @@ def view():
       r = ""
       l = string.split(" ")
       for w in l:
+          if not isinstance(w,str):
+              continue
+          pass
           r += w[0].upper()
       return r
 
@@ -196,29 +199,16 @@ def view():
        # get sequence length and annotation data
        seq_length = len(seq.replace(" ", ""))
        if request.vars.user_id is not None:
-            selected_user_id = request.vars.user_id
+            selected_user_id = long(request.vars.user_id+"L")
             user_chosen = True
-            # TODO select annotation list based on request.vars.user_id ~ possibly use a SQLFORM.grid ?
-            # annotation_list = db(db.annotation_to_descriptor.descriptor_id == desc_id).select().as_list()
-            annotation_list = [
-                {
-                    'annotation_name' : 'Test single annotation',
-                    'annotation_location' : [20],
-                    'date_created' : datetime.utcnow().strftime("%m/%d/%y"),
-                    'annotation_description' : 'A test annotation hard-coded in for now',
-                    'annotation_sequence' : 'ACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTG'
-                },
-                {
-                    'annotation_name' : 'Test multi annotation',
-                    'annotation_location' : [130, 200],
-                    'date_created' : datetime.utcnow().strftime("%m/%d/%y"),
-                    'annotation_description' : 'A test annotation hard-coded in for now',
-                    'annotation_sequence' : 'ACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTG'
-                }
-            ]
-       else:
-            pass
-
+       pass
+       annotation_list = {}
+       for user in db(db.auth_user).select():
+          annotation_list[user.id] = db(
+                                           (db.annotations.id.belongs(db.annotation_to_descriptor.descriptor_id == desc_id))
+                                           & (db.annotations.creating_user_id == user.id)
+                                       ).select(db.annotations.ALL)
+       pass
 
    return locals()
 
@@ -270,16 +260,16 @@ def upload_annotation():
     # response.menu = setResponseMenu('multiple', True)
 
     categories = []
-    for seq in db(db.descriptor_table).select(): #run through seq names
-        """if auth.user.first_name == seq.creating_user_id: #if they match curr users name append them for later
-            categories.append(seq.sequence_name)"""
-        if (seq.creating_user_id == auth.user_id):
-            categories.append(seq.sequence_name)
+    subscribed_descriptors = db(db.descriptor_to_user.user_id == auth.user_id).select(db.descriptor_to_user.descriptor_id)
+    for descriptor in subscribed_descriptors: #run through seq names
+        seq = db(db.descriptor_table.id == descriptor.descriptor_id).select(db.descriptor_table.sequence_name).first()
+        categories.append(seq.sequence_name)
 
     form = SQLFORM.factory(
         Field('seq_name', label=' Select A Sequence to Annotate', requires=IS_IN_SET(categories), required=True), # consists of only users own sequences
         Field('annotation_name', requires=IS_NOT_EMPTY()),
         Field('annotation_position', 'list:integer'),
+        Field('length', 'integer'),
         Field('description', 'text')
     )
 
@@ -313,9 +303,16 @@ def delete():
     annotation_id = request.vars.annotation_id
     annotations = None
     # check user permissions
-    if auth.user.id <> db(db.descriptor_table.id==desc_id).select().first().creating_user_id:
-        session.flash=T('Invalid Privileges')
-        redirect(URL('default', 'index'))
+    if desc_id:
+        if auth.user.id <> db(db.descriptor_table.id==desc_id).select().first().creating_user_id:
+			session.flash=T('Invalid Privileges')
+			redirect(URL('default', 'index'))
+    elif annotation_id:
+        if auth.user.id <> db(db.annotations.id==annotation_id).select().first().creating_user_id:
+			test = db(db.annotations.id==annotation_id).select().first().creating_user_id
+			session.flash=T('Invalid Privileges')
+			redirect(URL('default', 'index'))
+	'''deleting sequence+associated annotations'''		
     if desc_id:
         # delete discriptor_to_user tuples
         db(db.descriptor_to_user.descriptor_id==desc_id).delete()
@@ -330,15 +327,15 @@ def delete():
         db(db.descriptor_table.id==desc_id).delete()
         # delete annotation tuples
         annotations = db(db.annotation_to_descriptor.descriptor_id==desc_id).select()
+    	for item in annotations:
+        	annot_id = item.annotation_id
+        	db(db.annotations.annotation_id==annot_id).delete()
+        	# delete annotation to descriptor tuples
+        	db(db.annotation_to_descriptor.annotation_id==annot_id).delete()
+	'''deleting single annotation with given annotation id'''
     if annotation_id:
-        annotations = db(db.annotations.id==annotation_id &
-                         db.annotations.creating_user_id==auth.user.id).select()
-
-    for item in annotations:
-        annot_id = item.annotation_id
-        db(db.annotations.annotation_id==annot_id).delete()
-        # delete annotation to descriptor tuples
-        db(db.annotation_to_descriptor.annotation_id==annot_id).delete()
+		db(db.annotation_to_descriptor.annotation_id==annotation_id).delete()
+		db(db.annotations.id==annotation_id).delete()
 
     redirect (URL('default', 'index'))
 
@@ -365,7 +362,7 @@ def update_sequence():
 
     form = SQLFORM.factory(
         Field('name', label='Select a Sequence', requires=IS_IN_SET(categories), required=True),
-        Field('position', 'list:integer', label = 'Location to Delete')
+        Field('position', 'list:integer', label='Location to Delete')
     )
 
     if request.args(0)=='add':
@@ -374,7 +371,7 @@ def update_sequence():
         form = SQLFORM.factory(
             Field('name', label='Select a Sequence to Add to', requires=IS_IN_SET(categories), required=True),
             Field('seqs', 'text', label='Additional Sequence to Add', requires=IS_NOT_EMPTY()),
-            Field('position', 'list:integer', label = 'Position to Add Sequence')
+            Field('position', 'list:integer', label='Position(s) to Insert Sequence')
         )
     if request.args(0)=='replace':
         del_active = False
@@ -382,7 +379,7 @@ def update_sequence():
         form = SQLFORM.factory(
             Field('name', label='Select a Sequence', requires=IS_IN_SET(categories), required=True),
             Field('seqs', 'text', label='Replacement Sequence', requires=IS_NOT_EMPTY()),
-            Field('position', 'list:integer', label = 'Positions to replace with above Sequence')
+            Field('position', 'list:integer', label='Position(s) to replace with above Sequence')
         )
 
     if form.process().accepted:
