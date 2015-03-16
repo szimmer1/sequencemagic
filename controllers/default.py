@@ -202,24 +202,12 @@ def view():
             selected_user_id = long(request.vars.user_id+"L")
             user_chosen = True
        pass
+       
+       '''Query for Active Annotations''' #annotation_list used in view
        annotation_list = {} #(dict)
        active_id_list = []  #(list)
        for active_annotation in db(db.active_annotations.descriptor_id==desc_id).select():
            active_id_list.append(active_annotation.active_id)
-	   #DEBUG DEBUG redirect (URL('default', 'index', vars = {'list':active_id_list}))
-       #for user in db(db.auth_user).select():
-               
-	   '''annotation_list[user.id] = db(
-                                           (db.annotations.id.belongs(db.annotation_to_descriptor.descriptor_id == desc_id))
-                                           & (db.annotations.creating_user_id == user.id)
-                                       ).select(db.annotations.ALL)
-       '''
-       ''' annotation_list[user.id] = db(
-                                        (db.annotations.id in active_id_list) & 
-                                        #(db.annotations.id.belongs(db.active_annotations.descriptor_id==desc_id))
-                                        (db.annotations.creating_user_id==user.id)
-										).select()
-       '''
        for active_id in active_id_list:
            annotation_row = db(db.annotations.id==active_id).select()
            for annotation in annotation_row:
@@ -229,7 +217,19 @@ def view():
 			       annotation_list[annotation.creating_user_id] = db(db.annotations.id==active_id).select()
 	   pass
 
+
+       '''Annotation Update History''' #annotation_history list used in view
+       annotation_id_list = []
+       annotation_history = []
+       for annotation in db(db.annotation_to_descriptor.descriptor_id==desc_id).select():
+	      annotation_id_list.append(annotation.annotation_id)
+       annotation_id_list.sort(reverse=True)
+       for annot_id in annotation_id_list:
+	      annotation_history.append(db(db.annotations.id==annot_id).select())
+
 	   
+
+
 	   
 
    return locals()

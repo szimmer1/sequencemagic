@@ -96,6 +96,11 @@
             </div>
 
             <div class="col-md-3 col-xs-12">
+				{{for annotation in annotation_history:}}
+				<li>
+				{{=annotation}}
+				</li>
+				{{pass}}
                 <p>It would be cool if we had an update stream right over here</p>
             </div>
 
