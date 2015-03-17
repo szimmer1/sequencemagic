@@ -22,7 +22,7 @@ def index():
    """Set response menu"""
    ctrl = 'index'
    authorized = False
-
+   empty_query = None
    if request.vars.search_seq is not None:
        header_text = "Search Results"
        search = True
@@ -46,11 +46,12 @@ def index():
 
                if row.user_id== auth.user_id:
                    authorized = True 
-           #FIX THE HIGHLIGHT
+        
+           
            if not authorized: 
-               if request.args(0) == auth.user_id: #doing this to ensure the user is the one that the url says 
+               if request.args(0) == str(auth.user_id): #doing this to ensure the user is the one that the url says 
                    authorized = True               #(you can manually change it. this fixes that)
-               
+                   empty_query = True
                    
 
            """if p is None:
