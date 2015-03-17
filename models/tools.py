@@ -9,7 +9,7 @@ def delete_annotation(annotation_id):
     db(db.annotations.id==annotation_id).delete()
     redirect(URL('default', 'view', args=[desc_id]))
 
- '''
+'''
 delete_anntation_by_loc will delete all annotations on a given sequence
 determined by localization over a region spanning index1 and index2
 '''   
@@ -19,8 +19,11 @@ def delete_annotation_by_loc(descriptor_id, index1, index2):
         annot_id = annotation.id
         annot_index1 = annotation.annotation_location
         annot_index2 = annot_index1 + annotation.annotation_length
-        if  (annot_index1==index1) or (annot_index2==index2) or (
-                (annot_index1<index1) and (annot_index2>index2)):
+        if  ((annot_index1==index1) or (annot_index2==index2)
+             or ((annot_index1<index1) and (annot_index2>index1))
+             or ((annot_index1<index2) and (annot_index2>index2))
+             or ((annot_index1>index1) and (annot_index2<index2))
+        ):
             db(db.annotation_to_descriptor.annotation_id==annot_id).delete()
             db(db.active_annotations.active_id==annot_id).delete()
             db(db.annotations.id==annot_id).delete()
