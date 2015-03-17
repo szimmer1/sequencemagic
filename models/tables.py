@@ -132,8 +132,9 @@ def update_descriptor_to_user(desc_id):
 def insert_annotation(form):
    existing_desc_row = db(db.descriptor_table.sequence_name == form.vars.seq_name).select().first().seq_id
    existing_seq_row = db(db.sequences.id == existing_desc_row).select().first()
+   existing_seq = existing_seq_row.seq
    descriptor_id = db(db.descriptor_table.sequence_name == form.vars.seq_name).select().first().id
-   seq_len = len(existing_seq_row.seq)
+   seq_len = len(existing_seq)
    if form.vars.length > seq_len:
        redirect(URL('default','view', args=descriptor_id,
                     vars=dict(error_string = 'Your annotation is too long please retry')))
@@ -164,8 +165,8 @@ def update_active_annotations(new_id, new_name, desc_id):
 									)
 
 def parseSequence(filetype, filename, seq_id):
-	SEQFILE = open(os.path.join(request.folder+'static/uploads/'+filename))
-	if filetype == 'FASTA':
+    SEQFILE = open(os.path.join(request.folder+'static/uploads/'+filename))
+    if filetype == 'FASTA':
 		sequence = ''
 		firstseq = False
 		for line in SEQFILE:
@@ -175,7 +176,11 @@ def parseSequence(filetype, filename, seq_id):
 			else:
 				sequence += line.strip()
 		db(db.sequences.id==seq_id).update(seq = sequence)
-
+    if filetype == 'Plain Sequence':
+        sequence = ''
+        for line in SEQFILE:
+            sequence += line.rstrip()
+        db(db.sequences.id==seq_id).update(seq=sequence)
 
 """
 sequence table, which contain all the sequences

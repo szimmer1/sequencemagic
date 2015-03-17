@@ -422,8 +422,6 @@ def delete():
     '''deleting single annotation with given annotation id'''
     if annotation_id:
 		delete_annotation(annotation_id)
-    
-
     return
 
 '''Anyone subscribed to sequence may edit annotations
