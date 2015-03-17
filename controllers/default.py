@@ -370,37 +370,15 @@ def delete():
 			test = db(db.annotations.id==annotation_id).select().first().creating_user_id
 			session.flash=T('Invalid Privileges')
 			redirect(URL('default', 'index'))
+	
 	'''deleting sequence+associated annotations'''		
     if desc_id:
-        # delete discriptor_to_user tuples
-        db(db.descriptor_to_user.descriptor_id==desc_id).delete()
-        #delete sequences tuple
-        seq_id=db(db.descriptor_table.id==desc_id).select().first().seq_id
-        seq_file_name=db(db.sequences.id==seq_id).select().first().seq_file_name
-        db(db.sequences.id==seq_id).delete()
-        if seq_file_name <> None:
-            # remove file in /sequencemagic/uploads/<sequences.seq_file_name>
-            os.remove(request.folder+'static/uploads/'+seq_file_name)
-        # delete descriptor
-        db(db.descriptor_table.id==desc_id).delete()
-        #delete active_annotation tuple
-        db(db.active_annotations.descriptor_id==desc_id).delete()
-        # delete annotation tuples
-        annotations = db(db.annotation_to_descriptor.descriptor_id==desc_id).select()
-    	for item in annotations:
-        	annot_id = item.annotation_id
-        	db(db.annotations.annotation_id==annot_id).delete()
-        	# delete annotation to descriptor tuples
-        	db(db.annotation_to_descriptor.annotation_id==annot_id).delete()
-	'''deleting single annotation with given annotation id'''
+		delete_sequence(desc_id)
+	
+    '''deleting single annotation with given annotation id'''
     if annotation_id:
-		desc_id=db(db.active_annotations.active_id==annotation_id).select().first().descriptor_id
-		db(db.active_annotations.active_id==annotation_id).delete()
-		db(db.annotation_to_descriptor.annotation_id==annotation_id).delete()
-		db(db.annotations.id==annotation_id).delete()
-		redirect(URL('default', 'view', args=[desc_id]))
-
-    redirect (URL('default', 'index', args=[auth.user_id]))
+		delete_annotation(annotation_id)
+    
 
     return
 
