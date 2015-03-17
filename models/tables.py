@@ -34,12 +34,19 @@ def update_existing_sequence(form,flag):
     # make list of ints because form.vars.position is a string
     position_list = []
     for pos in form.vars.position:
+        length = form.vars.position[1]
         position_list.append(int(pos))
 
     if flag == 'del': # only allowing for single bases, one substring, or multiple substrings
+        new_seq = ''
         if len(position_list) == 1: # deleting single base
-            new_seq = existing_seq[0:position_list[0]]
-            new_seq += existing_seq[position_list[0]+1:]
+            if position_list[0] <= 0: # delete first base
+                new_seq = existing_seq[1:]
+            elif position_list[0] > len(existing_seq): # delete last base
+                new_seq = existing_seq[0:-1]
+            else:
+                new_seq = existing_seq[0:position_list[0]]
+                new_seq += existing_seq[position_list[0]+1:]
         elif len(position_list) % 2 == 0: # deleting at least one substring
             seqs_to_del = []
             new_seq = existing_seq
@@ -52,17 +59,25 @@ def update_existing_sequence(form,flag):
                 new_seq = new_seq.replace(seq,'',1)
         existing_seq_row.update_record(seq=new_seq)
 
-    elif flag == 'add':
+    elif flag == 'add': # inserts to the left of user selected position(s)
         if len(position_list) == 1: # adding in sequence in only one position
-            new_seq = existing_seq[0:position_list[0]+1]
-            new_seq += form.vars.seqs
-            new_seq += existing_seq[position_list[0]+1:]
+            if position_list[0] <= 0: # prepend
+                new_seq = form.vars.seqs + existing_seq
+            elif position_list[0] > len(existing_seq): # append
+                new_seq = existing_seq + form.vars.seqs
+            else: # insert new sequence to left of user selected position
+                new_seq = existing_seq[0:position_list[0]]
+                new_seq += form.vars.seqs
+                new_seq += existing_seq[position_list[0]:]
         elif len(position_list) > 1: # adding after more than one position
-            pass
+            new_seq = ''
+            for pos in position_list:
+                pass
         existing_seq_row.update_record(seq=new_seq)
 
     elif flag == 'replace':
         pass
+    return length
 
 def insert_descriptor_table(form, seq_id):
    # updates descriptor_table table with sequence name, description, and id
