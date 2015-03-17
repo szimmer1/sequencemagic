@@ -99,8 +99,8 @@ def unsubscribe():
 		if item.creating_user_id==auth.user_id:
 			session.flash = T("You can not unsubscribe from a sequence you created.")
 			redirect(URL('default', 'index', vars={'test':'test'}))
-	
-	db((db.descriptor_to_user.descriptor_id==request.args(0))&(db.descriptor_to_user.user_id==auth.user_id)).delete()
+	#in tools.py
+	delete_subscription(request.args(0))
 	redirect(URL('default', 'index', args = [auth.user_id]))
 
 @auth.requires_login()
@@ -151,7 +151,8 @@ def view():
    annotationList = sequence_row = seq = seq_type = desc_name = \
        desc_description = date_created = desc_author = list_of_subscriptors = \
        seq_length = annotation_list = plasmid_name = user_chosen = \
-       selected_user_id = annotation_form = is_subscriptor = is_creator = None
+       selected_user_id = annotation_form = is_subscriptor = is_creator = \
+       update_sequence_form = None
    found_sequence = False
    
    desc_id = request.args(0) or None
@@ -266,51 +267,30 @@ def view():
           redirect(URL('default', 'view', args=[descriptor_id]))
       else:
           pass
-   """Update Sequence Form"""
-   categories = []
-   del_active = True
-   add_active = False
 
-   for seq in db(db.descriptor_table).select(): #run through seq names
-       if (seq.creating_user_id == auth.user_id):
-           categories.append(seq.sequence_name)
-
-   update_sequence_form = SQLFORM.factory(
-       Field('name', label='Select a Sequence', requires=IS_IN_SET(categories), required=True),
-       Field('position', label='Location to Delete')
-   )
-
-   if request.args(0)=='add':
-       del_active = False
-       add_active = True
-       update_sequence_form = SQLFORM.factory(
-           Field('name', label='Select a Sequence to Add to', requires=IS_IN_SET(categories), required=True),
-           Field('seqs', 'text', label='Additional Sequence to Add', requires=IS_NOT_EMPTY()),
-           Field('position', label='Position(s) to Insert Sequence')
-       )
-   if request.args(0)=='replace':
-       del_active = False
-       add_active = False
-       update_sequence_form = SQLFORM.factory(
-           Field('name', label='Select a Sequence', requires=IS_IN_SET(categories), required=True),
-           Field('seqs', 'text', label='Replacement Sequence', requires=IS_NOT_EMPTY()),
-           Field('position', label='Position(s) to replace with above Sequence')
-       )
-
-   if update_sequence_form.process().accepted:
-       session.flash = T("Your form was accepted")
-       if request.args(0)=='add':
-           update_existing_sequence(update_sequence_form,'add')
-           redirect(URL('default', 'view',
-                        args=db(db.descriptor_table.sequence_name==update_sequence_form.vars.name).select().first().id))
-       elif request.args(0)=='replace':
-           update_existing_sequence(form,'replace')
-           redirect(URL('default', 'view',
-                        args=db(db.descriptor_table.sequence_name==update_sequence_form.vars.name).select().first().id))
-       else:
-           length = update_existing_sequence(form,'del')
-           redirect(URL('default', 'view',
-                        args=db(db.descriptor_table.sequence_name==update_sequence_form.vars.name).select().first().id))
+      """Update Sequence Form"""
+      update_sequence_form = SQLFORM.factory(
+              Field('name', readable=False, writable=False),
+              Field('seqs', 'text', label='Additional Sequence to Add', requires=IS_NOT_EMPTY()),
+              Field('position', label='Position(s) to Insert Sequence'),
+              Field('form_action', readable=False)
+          )
+      update_sequence_form.vars.form_action = 'add'
+      update_sequence_form.vars.name = sequence_name
+      if update_sequence_form.process().accepted:
+          session.flash = T("Your form was accepted")
+          if update_sequence_form.vars.form_action == 'add':
+              update_existing_sequence(update_sequence_form,'add')
+              redirect(URL('default', 'view',
+                           args=db(db.descriptor_table.sequence_name==update_sequence_form.vars.name).select().first().id))
+          elif update_sequence_form.vars.form_action == 'replace':
+              update_existing_sequence(update_sequence_form,'replace')
+              redirect(URL('default', 'view',
+                           args=db(db.descriptor_table.sequence_name==update_sequence_form.vars.name).select().first().id))
+          else:
+              length = update_existing_sequence(update_sequence_form,'del')
+              redirect(URL('default', 'view',
+                           args=db(db.descriptor_table.sequence_name==update_sequence_form.vars.name).select().first().id))
 
    query_last_annotator = db((db.descriptor_table.id == desc_id) & (db.descriptor_table.id == db.annotation_to_descriptor.descriptor_id) & (db.annotation_to_descriptor.annotation_id == db.annotations.id) & (db.annotations.creating_user_id == db.auth_user.id)).select(db.annotations.creating_user_id, db.annotations.date_created, db.auth_user.first_name, db.auth_user.last_name, orderby=~db.annotations.date_created)
    last_annotator = None
@@ -433,6 +413,8 @@ def delete():
     if annotation_id:
 		#in tools.py
 		delete_annotation(annotation_id)
+    
+
     return
 
 '''Anyone subscribed to sequence may edit annotations

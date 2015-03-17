@@ -18,13 +18,12 @@ def delete_annotation_by_loc(descriptor_id, index1, index2):
     for annotation_to_desc in annotations_to_descs:
         annot_id = annotation_to_desc.id
         annotation = db(db.annotations.id==annot_id).select().first()
-        annot_index1 = annotation.annotation_location
+        annot_index1 = int(annotation.annotation_location[0])
         annot_index2 = annot_index1 + annotation.annotation_length
         if  ((annot_index1==index1) or (annot_index2==index2)
              or ((annot_index1<index1) and (annot_index2>index1))
              or ((annot_index1<index2) and (annot_index2>index2))
-             or ((annot_index1>index1) and (annot_index2<index2))
-        ):
+             or ((annot_index1>index1) and (annot_index2<index2))):
             db(db.annotation_to_descriptor.annotation_id==annot_id).delete()
             db(db.active_annotations.active_id==annot_id).delete()
             db(db.annotations.id==annot_id).delete()
@@ -58,4 +57,5 @@ def delete_sequence(descriptor_id):
 
     redirect(URL('default', 'index', args=[auth.user_id]))
 
-    
+def delete_subscription(descriptor_id):
+    db((db.descriptor_to_user.descriptor_id==descriptor_id) & (db.descriptor_to_user.user_id==auth.user.id)).delete()
