@@ -312,6 +312,12 @@ def view():
            redirect(URL('default', 'view',
                         args=db(db.descriptor_table.sequence_name==update_sequence_form.vars.name).select().first().id))
 
+   query_last_annotator = db((db.descriptor_table.id == desc_id) & (db.descriptor_table.id == db.annotation_to_descriptor.descriptor_id) & (db.annotation_to_descriptor.annotation_id == db.annotations.id) & (db.annotations.creating_user_id == db.auth_user.id)).select(db.annotations.creating_user_id, db.annotations.date_created, db.auth_user.first_name, db.auth_user.last_name, orderby=~db.annotations.date_created)
+   last_annotator = None
+   for row in query_last_annotator:
+       last_annotator = row
+       break
+   
    return locals()
 
 
