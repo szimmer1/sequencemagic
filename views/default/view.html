@@ -10,9 +10,9 @@
                 <i class="fa fa-gear"></i>
             </button>
             <ul class="dropdown-menu">
-                {{if is_creator:}}
+                {{#if is_creator:}}
                 <li>
-                    <a href="#">Delete</a>
+                    <a href="#" style="background: red; color: white;">Delete</a>
                 </li>
                 {{elif is_subscriptor:}}
                 <li>
