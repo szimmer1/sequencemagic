@@ -47,9 +47,11 @@ def index():
                if row.user_id== auth.user_id:
                    authorized = True 
            
-               if not authorized:
-                   if request.args(0) == auth.user_id: #doing this to ensure the user is the one that the url says
-                       authorized = True               #(you can manually change it. this fixes that)
+           if not authorized: 
+               if request.args(0) == auth.user_id: #doing this to ensure the user is the one that the url says 
+                   authorized = True               #(you can manually change it. this fixes that)
+               
+               
 
            """if p is None:
                session.flash = T("You need to subscribe")"""
