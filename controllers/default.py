@@ -263,8 +263,51 @@ def view():
               redirect(URL('default', 'view', args=[descriptor_id]))
           else:
               pass
+       """Update Sequence Form"""
+       categories = []
+       del_active = True
+       add_active = False
 
-	   
+       for seq in db(db.descriptor_table).select(): #run through seq names
+           if (seq.creating_user_id == auth.user_id):
+               categories.append(seq.sequence_name)
+
+       update_sequence_form = SQLFORM.factory(
+           Field('name', label='Select a Sequence', requires=IS_IN_SET(categories), required=True),
+           Field('position', label='Location to Delete')
+       )
+
+       if request.args(0)=='add':
+           del_active = False
+           add_active = True
+           update_sequence_form = SQLFORM.factory(
+               Field('name', label='Select a Sequence to Add to', requires=IS_IN_SET(categories), required=True),
+               Field('seqs', 'text', label='Additional Sequence to Add', requires=IS_NOT_EMPTY()),
+               Field('position', label='Position(s) to Insert Sequence')
+           )
+       if request.args(0)=='replace':
+           del_active = False
+           add_active = False
+           update_sequence_form = SQLFORM.factory(
+               Field('name', label='Select a Sequence', requires=IS_IN_SET(categories), required=True),
+               Field('seqs', 'text', label='Replacement Sequence', requires=IS_NOT_EMPTY()),
+               Field('position', label='Position(s) to replace with above Sequence')
+           )
+
+       if update_sequence_form.process().accepted:
+           session.flash = T("Your form was accepted")
+           if request.args(0)=='add':
+               update_existing_sequence(update_sequence_form,'add')
+               redirect(URL('default', 'view',
+                            args=db(db.descriptor_table.sequence_name==update_sequence_form.vars.name).select().first().id))
+           elif request.args(0)=='replace':
+               update_existing_sequence(form,'replace')
+               redirect(URL('default', 'view',
+                            args=db(db.descriptor_table.sequence_name==update_sequence_form.vars.name).select().first().id))
+           else:
+               length = update_existing_sequence(form,'del')
+               redirect(URL('default', 'view',
+                            args=db(db.descriptor_table.sequence_name==update_sequence_form.vars.name).select().first().id))
 
    return locals()
 

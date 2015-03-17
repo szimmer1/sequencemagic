@@ -54,11 +54,20 @@
                     </div>
 
                     <div class="col-md-12 col-xs-12 add-annotation-wrapper">
+                        {{if request.vars.error_string:}}
+                                {{=request.vars.error_string}}<br>
+                            {{pass}}
                         <button class="btn btn-primary add-annotation">
                             <i class="fa fa-plus"></i> Add an annotation
                         </button>
                         <div class="annotation-form-wrapper" style="display: none;">
                             {{=annotation_form}}
+                        </div>
+                        <button class="btn btn-primary update_sequence">
+                            <i class="fa fa-plus"></i> Update Sequence
+                        </button>
+                        <div class="annotation-form-wrapper" style="display: none;">
+                            <ul class="btn-group">
                         </div>
                     </div>
 

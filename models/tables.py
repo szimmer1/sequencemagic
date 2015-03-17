@@ -35,6 +35,7 @@ def update_existing_sequence(form,flag):
     existing_seq = existing_seq_row.seq
     # make list of ints because form.vars.position is a string
     position_list = []
+    update_length = 0
     test_list = form.vars.position.replace(',',' ').replace('-',' ').split()
     for pos in test_list:
         position_list.append(int(pos))
@@ -53,6 +54,7 @@ def update_existing_sequence(form,flag):
             else:
                 new_seq = existing_seq[0:position_list[0]]
                 new_seq += existing_seq[position_list[0]+1:]
+
         elif len(position_list) % 2 == 0: # deleting at least one substring
             seqs_to_del = []
             new_seq = existing_seq
@@ -63,6 +65,7 @@ def update_existing_sequence(form,flag):
                 seqs_to_del.append(del_seq)
             for seq in seqs_to_del: # now replace by empty string
                 new_seq = new_seq.replace(seq,'',1)
+            update_length = 0
         existing_seq_row.update_record(seq=new_seq)
 
     elif flag == 'add': # inserts to the left of user selected position(s)
@@ -132,8 +135,8 @@ def insert_annotation(form):
    descriptor_id = db(db.descriptor_table.sequence_name == form.vars.seq_name).select().first().id
    seq_len = len(existing_seq_row.seq)
    if form.vars.length > seq_len:
-       session.flash = T("Length of annotation was too long")
-       redirect(URL('default','view', args=descriptor_id))
+       redirect(URL('default','view', args=descriptor_id,
+                    vars=dict(error_string = 'Your annotation is too long please retry')))
    annotation_id = db.annotations.insert(annotation_name = form.vars.annotation_name,
                               annotation_location = form.vars.annotation_position,
                               date_created = datetime.utcnow(),
