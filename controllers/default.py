@@ -53,8 +53,6 @@ def index():
                
                
 
-               if row.user_id == auth.user_id:
-                   authorized = True
            """if p is None:
                session.flash = T("You need to subscribe")"""
 
