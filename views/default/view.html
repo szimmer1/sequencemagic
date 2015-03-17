@@ -10,13 +10,13 @@
                 <i class="fa fa-gear"></i>
             </button>
             <ul class="dropdown-menu">
-                {{#if is_creator:}}
+                {{if is_creator:}}
                 <li>
-                    <a href="#" style="background: red; color: white;">Delete</a>
+                    <a href="{{=URL('default', 'delete', vars=dict(desc_id=desc_id))}}" style="background: red; color: white;">Delete</a>
                 </li>
                 {{elif is_subscriptor:}}
                 <li>
-                    <a href="#">Unsubscribe</a>
+                    <a href="{{=URL('default', 'unsubscribe', args=[desc_id])}}">Unsubscribe</a>
                 </li>
                 {{pass}}
             </ul>
