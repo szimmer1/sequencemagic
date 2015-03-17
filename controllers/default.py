@@ -23,6 +23,8 @@ def index():
    ctrl = 'index'
    authorized = False
    empty_query = None
+   
+   
    if request.vars.search_seq is not None:
        header_text = "Search Results"
        search = True
@@ -212,102 +214,103 @@ def view():
        return locals()
 
    sequence_row = file_url = None
-   if authorized:
+   
+   
        # get sequence length and annotation data
-       seq_length = len(seq.replace(" ", ""))
-       if request.vars.user_id is not None:
-            selected_user_id = long(request.vars.user_id+"L")
-            user_chosen = True
-       pass
-       
-       '''Query for Active Annotations''' #annotation_list used in view
-       annotation_list = {} #(dict)
-       active_id_list = []  #(list)
-       for active_annotation in db(db.active_annotations.descriptor_id==desc_id).select():
-           active_id_list.append(active_annotation.active_id)
-       for active_id in active_id_list:
-           annotation_row = db(db.annotations.id==active_id).select()
-           for annotation in annotation_row:
-               #if annotation.creating_user_id in annotation_list: 
-               if annotation_list.has_key(annotation.creating_user_id):
-                   annotation_list[annotation.creating_user_id].append(db(db.annotations.id==active_id).select().first())
-               else:
-			       annotation_list[annotation.creating_user_id] =[db(db.annotations.id==active_id).select().first()]
-	   pass
+   seq_length = len(seq.replace(" ", ""))
+   if request.vars.user_id is not None:
+        selected_user_id = long(request.vars.user_id+"L")
+        user_chosen = True
+   pass
+   
+   '''Query for Active Annotations''' #annotation_list used in view
+   annotation_list = {} #(dict)
+   active_id_list = []  #(list)
+   for active_annotation in db(db.active_annotations.descriptor_id==desc_id).select():
+       active_id_list.append(active_annotation.active_id)
+   for active_id in active_id_list:
+       annotation_row = db(db.annotations.id==active_id).select()
+       for annotation in annotation_row:
+           #if annotation.creating_user_id in annotation_list: 
+           if annotation_list.has_key(annotation.creating_user_id):
+               annotation_list[annotation.creating_user_id].append(db(db.annotations.id==active_id).select().first())
+           else:
+		       annotation_list[annotation.creating_user_id] =[db(db.annotations.id==active_id).select().first()]
+   pass
 
 
-       '''Annotation Update History''' #annotation_history list used in view
-       annotation_id_list = []
-       annotation_history = []
-       for annotation in db(db.annotation_to_descriptor.descriptor_id==desc_id).select():
-	      annotation_id_list.append(annotation.annotation_id)
-       annotation_id_list.sort(reverse=True)
-       for annot_id in annotation_id_list:
-	      annotation_history.append(db(db.annotations.id==annot_id).select().first())
+   '''Annotation Update History''' #annotation_history list used in view
+   annotation_id_list = []
+   annotation_history = []
+   for annotation in db(db.annotation_to_descriptor.descriptor_id==desc_id).select():
+      annotation_id_list.append(annotation.annotation_id)
+   annotation_id_list.sort(reverse=True)
+   for annot_id in annotation_id_list:
+      annotation_history.append(db(db.annotations.id==annot_id).select().first())
 
-	   
-       """Add annotation form"""
-       if authorized and seq is not None:
-          annotation_form = SQLFORM.factory(
-              Field('seq_name', writable=False, readable=False),
-              Field('annotation_name', requires=IS_NOT_EMPTY()),
-              Field('annotation_position', 'list:integer'),
-              Field('length', 'integer'),
-              Field('description', 'text')
-          )
-          annotation_form.vars.seq_name = sequence_name
+   
+   """Add annotation form"""
+   if authorized and seq is not None:
+      annotation_form = SQLFORM.factory(
+          Field('seq_name', writable=False, readable=False),
+          Field('annotation_name', requires=IS_NOT_EMPTY()),
+          Field('annotation_position', 'list:integer'),
+          Field('length', 'integer'),
+          Field('description', 'text')
+      )
+      annotation_form.vars.seq_name = sequence_name
 
-          if annotation_form.process().accepted:
-              session.flash = T("Your form was accepted")
-              descriptor_id = insert_annotation(annotation_form) #<-- defined in the models
-              redirect(URL('default', 'view', args=[descriptor_id]))
-          else:
-              pass
-       """Update Sequence Form"""
-       categories = []
-       del_active = True
+      if annotation_form.process().accepted:
+          session.flash = T("Your form was accepted")
+          descriptor_id = insert_annotation(annotation_form) #<-- defined in the models
+          redirect(URL('default', 'view', args=[descriptor_id]))
+      else:
+          pass
+   """Update Sequence Form"""
+   categories = []
+   del_active = True
+   add_active = False
+
+   for seq in db(db.descriptor_table).select(): #run through seq names
+       if (seq.creating_user_id == auth.user_id):
+           categories.append(seq.sequence_name)
+
+   update_sequence_form = SQLFORM.factory(
+       Field('name', label='Select a Sequence', requires=IS_IN_SET(categories), required=True),
+       Field('position', label='Location to Delete')
+   )
+
+   if request.args(0)=='add':
+       del_active = False
+       add_active = True
+       update_sequence_form = SQLFORM.factory(
+           Field('name', label='Select a Sequence to Add to', requires=IS_IN_SET(categories), required=True),
+           Field('seqs', 'text', label='Additional Sequence to Add', requires=IS_NOT_EMPTY()),
+           Field('position', label='Position(s) to Insert Sequence')
+       )
+   if request.args(0)=='replace':
+       del_active = False
        add_active = False
-
-       for seq in db(db.descriptor_table).select(): #run through seq names
-           if (seq.creating_user_id == auth.user_id):
-               categories.append(seq.sequence_name)
-
        update_sequence_form = SQLFORM.factory(
            Field('name', label='Select a Sequence', requires=IS_IN_SET(categories), required=True),
-           Field('position', label='Location to Delete')
+           Field('seqs', 'text', label='Replacement Sequence', requires=IS_NOT_EMPTY()),
+           Field('position', label='Position(s) to replace with above Sequence')
        )
 
+   if update_sequence_form.process().accepted:
+       session.flash = T("Your form was accepted")
        if request.args(0)=='add':
-           del_active = False
-           add_active = True
-           update_sequence_form = SQLFORM.factory(
-               Field('name', label='Select a Sequence to Add to', requires=IS_IN_SET(categories), required=True),
-               Field('seqs', 'text', label='Additional Sequence to Add', requires=IS_NOT_EMPTY()),
-               Field('position', label='Position(s) to Insert Sequence')
-           )
-       if request.args(0)=='replace':
-           del_active = False
-           add_active = False
-           update_sequence_form = SQLFORM.factory(
-               Field('name', label='Select a Sequence', requires=IS_IN_SET(categories), required=True),
-               Field('seqs', 'text', label='Replacement Sequence', requires=IS_NOT_EMPTY()),
-               Field('position', label='Position(s) to replace with above Sequence')
-           )
-
-       if update_sequence_form.process().accepted:
-           session.flash = T("Your form was accepted")
-           if request.args(0)=='add':
-               update_existing_sequence(update_sequence_form,'add')
-               redirect(URL('default', 'view',
-                            args=db(db.descriptor_table.sequence_name==update_sequence_form.vars.name).select().first().id))
-           elif request.args(0)=='replace':
-               update_existing_sequence(form,'replace')
-               redirect(URL('default', 'view',
-                            args=db(db.descriptor_table.sequence_name==update_sequence_form.vars.name).select().first().id))
-           else:
-               length = update_existing_sequence(form,'del')
-               redirect(URL('default', 'view',
-                            args=db(db.descriptor_table.sequence_name==update_sequence_form.vars.name).select().first().id))
+           update_existing_sequence(update_sequence_form,'add')
+           redirect(URL('default', 'view',
+                        args=db(db.descriptor_table.sequence_name==update_sequence_form.vars.name).select().first().id))
+       elif request.args(0)=='replace':
+           update_existing_sequence(form,'replace')
+           redirect(URL('default', 'view',
+                        args=db(db.descriptor_table.sequence_name==update_sequence_form.vars.name).select().first().id))
+       else:
+           length = update_existing_sequence(form,'del')
+           redirect(URL('default', 'view',
+                        args=db(db.descriptor_table.sequence_name==update_sequence_form.vars.name).select().first().id))
 
    return locals()
 

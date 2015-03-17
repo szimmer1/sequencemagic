@@ -17,7 +17,7 @@ def delete_annotation_by_loc(descriptor_id, index1, index2):
     annotations = db(db.annotation_to_descriptor.descriptor_id==descriptor_id).select()
     for annotation in annotations:
         annot_id = annotation.id
-        annot_index1 = annotation.annotation_location
+        annot_index1 = annotation.annotation_location[0]
         annot_index2 = annot_index1 + annotation.annotation_length
         if  ((annot_index1==index1) or (annot_index2==index2)
              or ((annot_index1<index1) and (annot_index2>index1))
