@@ -9,7 +9,7 @@ def delete_annotation(annotation_id):
     db(db.annotations.id==annotation_id).delete()
     redirect(URL('default', 'view', args=[desc_id]))
 
- '''
+'''
 delete_anntation_by_loc will delete all annotations on a given sequence
 determined by localization over a region spanning index1 and index2
 '''   

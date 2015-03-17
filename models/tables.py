@@ -30,31 +30,30 @@ def insert_file_sequence(form):
    return dict(desc_id = desc_id, seq_id=seq_id)
 
 def update_existing_sequence(form,flag):
-    existing_desc_row = db(db.descriptor_table.sequence_name == form.vars.name).select().first().seq_id
-    existing_seq_row = db(db.sequences.id == existing_desc_row).select().first()
+    existing_desc_row = db(db.descriptor_table.sequence_name == form.vars.name).select().first()
+    existing_desc_row_seq = existing_desc_row.seq_id
+    existing_seq_row = db(db.sequences.id == existing_desc_row_seq).select().first()
     existing_seq = existing_seq_row.seq
     # make list of ints because form.vars.position is a string
     position_list = []
-    update_length = 0
     test_list = form.vars.position.replace(',',' ').replace('-',' ').split()
     for pos in test_list:
         position_list.append(int(pos))
 
-    #redirect(URL('default', 'index', vars=dict(position_list=test_list)))
-
     if flag == 'del': # only allowing for a single base, one substring of bases, or multiple substrings
         new_seq = ''
-        # redirect(URL('default', 'index', vars=dict(pos=position_list[0])))
+        index1 = index2 = ''
         if len(position_list) == 1: # deleting single base
             if position_list[0] <= 0: # delete first base
                 new_seq = existing_seq[1:]
             elif position_list[0] > len(existing_seq): # delete last base
-                # redirect(URL('default', 'index', vars=dict(pos=position_list[0])))
                 new_seq = existing_seq[0:-1]
             else:
                 new_seq = existing_seq[0:position_list[0]]
                 new_seq += existing_seq[position_list[0]+1:]
-
+            existing_seq_row.update_record(seq=new_seq)
+            index1 = index2 = position_list[0]
+            delete_annotation_by_loc(existing_desc_row.id,index1,index2)
         elif len(position_list) % 2 == 0: # deleting at least one substring
             seqs_to_del = []
             new_seq = existing_seq
@@ -65,8 +64,8 @@ def update_existing_sequence(form,flag):
                 seqs_to_del.append(del_seq)
             for seq in seqs_to_del: # now replace by empty string
                 new_seq = new_seq.replace(seq,'',1)
-            update_length = 0
-        existing_seq_row.update_record(seq=new_seq)
+            existing_seq_row.update_record(seq=new_seq)
+
 
     elif flag == 'add': # inserts to the left of user selected position(s)
         new_seq = ''
