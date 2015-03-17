@@ -37,11 +37,12 @@
                     </div>
 
                     <div class="col-md-12 col-xs-12 add-annotation-wrapper">
-                        <a href="{{=URL('default', 'upload_annotation')}}">
-                        <button class="btn btn-primary">
+                        <button class="btn btn-primary add-annotation">
                             <i class="fa fa-plus"></i> Add an annotation
                         </button>
-                        </a>
+                        <div class="annotation-form-wrapper" style="display: none;">
+                            {{=annotation_form}}
+                        </div>
                     </div>
 
                     <div class="col-md-12 col-xs-12">
@@ -168,6 +169,13 @@
                     'border-left': '15px solid '+color,
                     'border-top': '15px solid '+color,
                     'border-top-left-radius': '10px'
+                })
+
+                // make upload drop down
+                $("button.add-annotation").click(function() {
+                    $(".annotation-form-wrapper").toggle({
+                        duration: 1000
+                    })
                 })
             })
         </script>

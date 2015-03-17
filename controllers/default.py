@@ -137,7 +137,7 @@ def view():
    annotationList = sequence_row = seq = seq_type = desc_name = \
        desc_description = date_created = desc_author = list_of_subscriptors = \
        seq_length = annotation_list = plasmid_name = user_chosen = \
-       selected_user_id = None
+       selected_user_id = annotation_form = None
    found_sequence = False
    
    desc_id = request.args(0) or None
@@ -230,27 +230,22 @@ def view():
 
 	   
        """Add annotation form"""
-       categories = []
-       subscribed_descriptors = db(db.descriptor_to_user.user_id == auth.user_id).select(db.descriptor_to_user.descriptor_id)
-       for descriptor in subscribed_descriptors: #run through seq names
-           seq = db(db.descriptor_table.id == descriptor.descriptor_id).select(db.descriptor_table.sequence_name).first()
-           categories.append(seq.sequence_name)
+       if authorized and seq is not None:
+          annotation_form = SQLFORM.factory(
+              Field('seq_name', writable=False, readable=False),
+              Field('annotation_name', requires=IS_NOT_EMPTY()),
+              Field('annotation_position', 'list:integer'),
+              Field('length', 'integer'),
+              Field('description', 'text')
+          )
+          annotation_form.vars.seq_name = sequence_name
 
-       form = SQLFORM.factory(
-           Field('seq_name', writable=False),
-           Field('annotation_name', requires=IS_NOT_EMPTY()),
-           Field('annotation_position', 'list:integer'),
-           Field('length', 'integer'),
-           Field('description', 'text')
-       )
-       form.vars.seq_name = seq.sequence_name
-
-       if form.process().accepted:
-           session.flash = T("Your form was accepted")
-           descriptor_id = insert_annotation(form) #<-- defined in the models
-           redirect(URL('default', 'view', args=[descriptor_id]))
-       else:
-           pass
+          if annotation_form.process().accepted:
+              session.flash = T("Your form was accepted")
+              descriptor_id = insert_annotation(annotation_form) #<-- defined in the models
+              redirect(URL('default', 'view', args=[descriptor_id]))
+          else:
+              pass
 
 	   
 
