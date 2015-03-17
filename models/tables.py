@@ -39,7 +39,7 @@ def update_existing_sequence(form,flag):
     for pos in test_list:
         position_list.append(int(pos))
 
-    # redirect(URL('default', 'index', vars=dict(position_list=position_list)))
+    #redirect(URL('default', 'index', vars=dict(position_list=test_list)))
 
     if flag == 'del': # only allowing for a single base, one substring of bases, or multiple substrings
         new_seq = ''
@@ -66,6 +66,7 @@ def update_existing_sequence(form,flag):
         existing_seq_row.update_record(seq=new_seq)
 
     elif flag == 'add': # inserts to the left of user selected position(s)
+        new_seq = ''
         if len(position_list) == 1: # adding in sequence in only one position
             if position_list[0] <= 0: # prepend
                 new_seq = form.vars.seqs + existing_seq
@@ -75,15 +76,41 @@ def update_existing_sequence(form,flag):
                 new_seq = existing_seq[0:position_list[0]]
                 new_seq += form.vars.seqs
                 new_seq += existing_seq[position_list[0]:]
-        elif len(position_list) > 1: # adding after more than one position
-            new_seq = ''
-            for pos in position_list:
-                pass
-        existing_seq_row.update_record(seq=new_seq)
+            existing_seq_row.update_record(seq=new_seq)
+        elif len(position_list) > 1: # adding left of more than one position
+            for pos in range(0, len(position_list), 1):
+                updated_row = db(db.sequences.id == existing_desc_row).select().first()
+                updated_seq = updated_row.seq
+                if position_list[pos] > len(existing_seq):
+                    updated_seq += form.vars.seqs
+                    updated_row.update_record(seq=updated_seq)
+                else:
+                    new_seq = updated_seq[:position_list[pos]]
+                    new_seq += form.vars.seqs
+                    new_seq += existing_seq[position_list[pos]:]
+                    updated_row.update_record(seq=new_seq)
 
-    elif flag == 'replace':
-        pass
-    # return length
+    elif flag == 'replace': # replaces user specified substring with user input seq
+        new_seq = ''
+        if len(position_list) == 1: # adding in sequence in only one position
+            if position_list[0] <= 0: # prepend
+                new_seq = form.vars.seqs + existing_seq
+            elif position_list[0] > len(existing_seq): # replace last base
+                new_seq = existing_seq[:len(existing_seq)-1] + form.vars.seqs
+            else: # change one base
+                new_seq = existing_seq[:position_list[0]] + form.vars.seqs + existing_seq[position_list[0]+1:]
+            existing_seq_row.update_record(seq=new_seq)
+        elif len(position_list) % 2 == 0:
+            seqs_to_del = []
+            new_seq = existing_seq
+            for pos in range(0, len(position_list),2): # first get all instances of string
+                pos1 = position_list[pos]
+                pos2 = position_list[pos+1]
+                del_seq = existing_seq[pos1:pos2+1]
+                seqs_to_del.append(del_seq)
+            for seq in seqs_to_del: # now replace by empty string
+                new_seq = new_seq.replace(seq,form.vars.seqs,1)
+        existing_seq_row.update_record(seq=new_seq)
 
 def insert_descriptor_table(form, seq_id):
    # updates descriptor_table table with sequence name, description, and id
@@ -109,7 +136,7 @@ def insert_annotation(form):
    descriptor_id = db(db.descriptor_table.sequence_name == form.vars.seq_name).select().first().id
    update_annotation_to_descriptor(annotation_id, descriptor_id)
    annotation_name = form.vars.annotation_name
-   # update_active_annotations(annotation_id,annotation_name , descriptor_id)
+   update_active_annotations(annotation_id,annotation_name , descriptor_id)
    return descriptor_id
 
 def update_annotation_to_descriptor(annotation_id, descriptor_id):
