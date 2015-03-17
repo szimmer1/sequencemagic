@@ -3,7 +3,7 @@
 {{if found_sequence:}}
     <h1 style="display: inline-block;">{{=desc_name}} <small>by {{=desc_author}} on {{if date_created is not None:}}{{=date_created.strftime("%m/%d/%y")}}{{pass}}</small></h1>
 
-    {{if authorized:}}
+
 
         <div class="btn-group pull-right" style="margin-top: 21px;">
             <button class="btn btn-primary dropdown-toggle" data-toggle="dropdown">
@@ -52,7 +52,7 @@
                             </plasmidtrack>
                         </plasmid>
                     </div>
-
+					{{if authorized:}}
                     <div class="col-md-12 col-xs-12 add-annotation-wrapper">
                         {{if request.vars.error_string:}}
                                 {{=request.vars.error_string}}<br>
@@ -75,7 +75,7 @@
                             {{=update_sequence_form}}
                         </div>
                     </div>
-
+					
                     <div class="col-md-12 col-xs-12">
                         <div class="row">
                             <div class="col-md-2 col-xs-2 user-nav">
@@ -119,12 +119,13 @@
                             </div>
                         </div>
                     </div>
+                    {{pass}}
                 </div>
 
             </div>
 
             <div class="col-md-3 col-xs-12">
-				<h4> Update History </h4>
+				<h4> Annotation Update History </h4>
 				{{for annotation in annotation_history:}}
 				<li>
 				{{=annotation.annotation_name}}<br>{{=annotation.date_created}}<br>{{=annotation.creating_user_id}}
@@ -267,7 +268,7 @@
             })
         </script>
 
-    {{pass}}
+    
 {{else:}}
         {{=seq}}
 {{pass}}

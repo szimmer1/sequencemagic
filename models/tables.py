@@ -30,31 +30,30 @@ def insert_file_sequence(form):
    return dict(desc_id = desc_id, seq_id=seq_id)
 
 def update_existing_sequence(form,flag):
-    existing_desc_row = db(db.descriptor_table.sequence_name == form.vars.name).select().first().seq_id
-    existing_seq_row = db(db.sequences.id == existing_desc_row).select().first()
+    existing_desc_row = db(db.descriptor_table.sequence_name == form.vars.name).select().first()
+    existing_desc_row_seq = existing_desc_row.seq_id
+    existing_seq_row = db(db.sequences.id == existing_desc_row_seq).select().first()
     existing_seq = existing_seq_row.seq
     # make list of ints because form.vars.position is a string
     position_list = []
-    update_length = 0
     test_list = form.vars.position.replace(',',' ').replace('-',' ').split()
     for pos in test_list:
         position_list.append(int(pos))
 
-    #redirect(URL('default', 'index', vars=dict(position_list=test_list)))
-
     if flag == 'del': # only allowing for a single base, one substring of bases, or multiple substrings
         new_seq = ''
-        # redirect(URL('default', 'index', vars=dict(pos=position_list[0])))
+        index1 = index2 = ''
         if len(position_list) == 1: # deleting single base
             if position_list[0] <= 0: # delete first base
                 new_seq = existing_seq[1:]
             elif position_list[0] > len(existing_seq): # delete last base
-                # redirect(URL('default', 'index', vars=dict(pos=position_list[0])))
                 new_seq = existing_seq[0:-1]
             else:
                 new_seq = existing_seq[0:position_list[0]]
                 new_seq += existing_seq[position_list[0]+1:]
-
+            existing_seq_row.update_record(seq=new_seq)
+            index1 = index2 = position_list[0]
+            delete_annotation_by_loc(existing_desc_row.id,index1,index2)
         elif len(position_list) % 2 == 0: # deleting at least one substring
             seqs_to_del = []
             new_seq = existing_seq
@@ -65,8 +64,8 @@ def update_existing_sequence(form,flag):
                 seqs_to_del.append(del_seq)
             for seq in seqs_to_del: # now replace by empty string
                 new_seq = new_seq.replace(seq,'',1)
-            update_length = 0
-        existing_seq_row.update_record(seq=new_seq)
+            existing_seq_row.update_record(seq=new_seq)
+
 
     elif flag == 'add': # inserts to the left of user selected position(s)
         new_seq = ''
@@ -132,8 +131,9 @@ def update_descriptor_to_user(desc_id):
 def insert_annotation(form):
    existing_desc_row = db(db.descriptor_table.sequence_name == form.vars.seq_name).select().first().seq_id
    existing_seq_row = db(db.sequences.id == existing_desc_row).select().first()
+   existing_seq = existing_seq_row.seq
    descriptor_id = db(db.descriptor_table.sequence_name == form.vars.seq_name).select().first().id
-   seq_len = len(existing_seq_row.seq)
+   seq_len = len(existing_seq)
    if form.vars.length > seq_len:
        redirect(URL('default','view', args=descriptor_id,
                     vars=dict(error_string = 'Your annotation is too long please retry')))
@@ -164,8 +164,8 @@ def update_active_annotations(new_id, new_name, desc_id):
 									)
 
 def parseSequence(filetype, filename, seq_id):
-	SEQFILE = open(os.path.join(request.folder+'static/uploads/'+filename))
-	if filetype == 'FASTA':
+    SEQFILE = open(os.path.join(request.folder+'static/uploads/'+filename))
+    if filetype == 'FASTA':
 		sequence = ''
 		firstseq = False
 		for line in SEQFILE:
@@ -175,7 +175,11 @@ def parseSequence(filetype, filename, seq_id):
 			else:
 				sequence += line.strip()
 		db(db.sequences.id==seq_id).update(seq = sequence)
-
+    if filetype == 'Plain Sequence':
+        sequence = ''
+        for line in SEQFILE:
+            sequence += line.rstrip()
+        db(db.sequences.id==seq_id).update(seq=sequence)
 
 """
 sequence table, which contain all the sequences

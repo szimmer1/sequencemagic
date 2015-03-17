@@ -23,6 +23,8 @@ def index():
    ctrl = 'index'
    authorized = False
    empty_query = None
+   
+   
    if request.vars.search_seq is not None:
        header_text = "Search Results"
        search = True
@@ -213,50 +215,51 @@ def view():
        return locals()
 
    sequence_row = file_url = None
-   if authorized:
+   
+   
        # get sequence length and annotation data
-       seq_length = len(seq.replace(" ", ""))
-       if request.vars.user_id is not None:
-            selected_user_id = long(request.vars.user_id+"L")
-            user_chosen = True
-       pass
-       
-       '''Query for Active Annotations''' #annotation_list used in view
-       annotation_list = {} #(dict)
-       active_id_list = []  #(list)
-       for active_annotation in db(db.active_annotations.descriptor_id==desc_id).select():
-           active_id_list.append(active_annotation.active_id)
-       for active_id in active_id_list:
-           annotation_row = db(db.annotations.id==active_id).select()
-           for annotation in annotation_row:
-               #if annotation.creating_user_id in annotation_list: 
-               if annotation_list.has_key(annotation.creating_user_id):
-                   annotation_list[annotation.creating_user_id].append(db(db.annotations.id==active_id).select().first())
-               else:
-			       annotation_list[annotation.creating_user_id] =[db(db.annotations.id==active_id).select().first()]
-	   pass
+   seq_length = len(seq.replace(" ", ""))
+   if request.vars.user_id is not None:
+        selected_user_id = long(request.vars.user_id+"L")
+        user_chosen = True
+   pass
+   
+   '''Query for Active Annotations''' #annotation_list used in view
+   annotation_list = {} #(dict)
+   active_id_list = []  #(list)
+   for active_annotation in db(db.active_annotations.descriptor_id==desc_id).select():
+       active_id_list.append(active_annotation.active_id)
+   for active_id in active_id_list:
+       annotation_row = db(db.annotations.id==active_id).select()
+       for annotation in annotation_row:
+           #if annotation.creating_user_id in annotation_list: 
+           if annotation_list.has_key(annotation.creating_user_id):
+               annotation_list[annotation.creating_user_id].append(db(db.annotations.id==active_id).select().first())
+           else:
+		       annotation_list[annotation.creating_user_id] =[db(db.annotations.id==active_id).select().first()]
+   pass
 
 
-       '''Annotation Update History''' #annotation_history list used in view
-       annotation_id_list = []
-       annotation_history = []
-       for annotation in db(db.annotation_to_descriptor.descriptor_id==desc_id).select():
-	      annotation_id_list.append(annotation.annotation_id)
-       annotation_id_list.sort(reverse=True)
-       for annot_id in annotation_id_list:
-	      annotation_history.append(db(db.annotations.id==annot_id).select().first())
+   '''Annotation Update History''' #annotation_history list used in view
+   annotation_id_list = []
+   annotation_history = []
+   for annotation in db(db.annotation_to_descriptor.descriptor_id==desc_id).select():
+      annotation_id_list.append(annotation.annotation_id)
+   annotation_id_list.sort(reverse=True)
+   for annot_id in annotation_id_list:
+      annotation_history.append(db(db.annotations.id==annot_id).select().first())
 
-	   
-       """Add annotation form"""
-       if authorized and seq is not None:
-          annotation_form = SQLFORM.factory(
-              Field('seq_name', writable=False, readable=False),
-              Field('annotation_name', requires=IS_NOT_EMPTY()),
-              Field('annotation_position', 'list:integer'),
-              Field('length', 'integer'),
-              Field('description', 'text')
-          )
-          annotation_form.vars.seq_name = sequence_name
+   
+   """Add annotation form"""
+   if authorized and seq is not None:
+      annotation_form = SQLFORM.factory(
+          Field('seq_name', writable=False, readable=False),
+          Field('annotation_name', requires=IS_NOT_EMPTY()),
+          Field('annotation_position', 'list:integer'),
+          Field('length', 'integer'),
+          Field('description', 'text')
+      )
+      annotation_form.vars.seq_name = sequence_name
 
           if annotation_form.process().accepted:
               session.flash = T("Your form was accepted")
@@ -270,9 +273,9 @@ def view():
        del_active = True
        add_active = False
 
-       for seq in db(db.descriptor_table).select(): #run through seq names
-           if (seq.creating_user_id == auth.user_id):
-               categories.append(seq.sequence_name)
+   for seq in db(db.descriptor_table).select(): #run through seq names
+       if (seq.creating_user_id == auth.user_id):
+           categories.append(seq.sequence_name)
 
        update_sequence_form = SQLFORM.factory(
                Field('name', readable=False, writable=False),
@@ -406,10 +409,12 @@ def delete():
 	
 	'''deleting sequence+associated annotations'''		
     if desc_id:
+		#in tools.py
 		delete_sequence(desc_id)
 	
     '''deleting single annotation with given annotation id'''
     if annotation_id:
+		#in tools.py
 		delete_annotation(annotation_id)
     
 
