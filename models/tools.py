@@ -14,16 +14,16 @@ delete_anntation_by_loc will delete all annotations on a given sequence
 determined by localization over a region spanning index1 and index2
 '''   
 def delete_annotation_by_loc(descriptor_id, index1, index2):
-    annotations = db(db.annotation_to_descriptor.descriptor_id==descriptor_id).select()
-    for annotation in annotations:
-        annot_id = annotation.id
-        annot_index1 = annotation.annotation_location[0]
+    annotations_to_descs = db(db.annotation_to_descriptor.descriptor_id==descriptor_id).select()
+    for annotation_to_desc in annotations_to_descs:
+        annot_id = annotation_to_desc.id
+        annotation = db(db.annotations.id==annot_id).select().first()
+        annot_index1 = int(annotation.annotation_location[0])
         annot_index2 = annot_index1 + annotation.annotation_length
         if  ((annot_index1==index1) or (annot_index2==index2)
              or ((annot_index1<index1) and (annot_index2>index1))
              or ((annot_index1<index2) and (annot_index2>index2))
-             or ((annot_index1>index1) and (annot_index2<index2))
-        ):
+             or ((annot_index1>index1) and (annot_index2<index2))):
             db(db.annotation_to_descriptor.annotation_id==annot_id).delete()
             db(db.active_annotations.active_id==annot_id).delete()
             db(db.annotations.id==annot_id).delete()
