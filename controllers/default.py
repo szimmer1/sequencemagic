@@ -99,8 +99,8 @@ def unsubscribe():
 		if item.creating_user_id==auth.user_id:
 			session.flash = T("You can not unsubscribe from a sequence you created.")
 			redirect(URL('default', 'index', vars={'test':'test'}))
-	
-	db((db.descriptor_to_user.descriptor_id==request.args(0))&(db.descriptor_to_user.user_id==auth.user_id)).delete()
+	#in tools.py
+	delete_subscription(request.args(0))
 	redirect(URL('default', 'index', args = [auth.user_id]))
 
 @auth.requires_login()
@@ -294,6 +294,12 @@ def view():
               redirect(URL('default', 'view',
                            args=db(db.descriptor_table.sequence_name==update_sequence_form.vars.name).select().first().id))
 
+   query_last_annotator = db((db.descriptor_table.id == desc_id) & (db.descriptor_table.id == db.annotation_to_descriptor.descriptor_id) & (db.annotation_to_descriptor.annotation_id == db.annotations.id) & (db.annotations.creating_user_id == db.auth_user.id)).select(db.annotations.creating_user_id, db.annotations.date_created, db.auth_user.first_name, db.auth_user.last_name, orderby=~db.annotations.date_created)
+   last_annotator = None
+   for row in query_last_annotator:
+       last_annotator = row
+       break
+   
    return locals()
 
 
