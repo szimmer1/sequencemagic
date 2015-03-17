@@ -99,8 +99,8 @@ def unsubscribe():
 		if item.creating_user_id==auth.user_id:
 			session.flash = T("You can not unsubscribe from a sequence you created.")
 			redirect(URL('default', 'index', vars={'test':'test'}))
-	
-	db((db.descriptor_to_user.descriptor_id==request.args(0))&(db.descriptor_to_user.user_id==auth.user_id)).delete()
+	#in tools.py
+	delete_subscription(request.args(0))
 	redirect(URL('default', 'index', args = [auth.user_id]))
 
 @auth.requires_login()
