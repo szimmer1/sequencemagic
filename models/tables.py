@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from datetime import datetime
+import os
 
 """
 Define get_first_name function for finding users names,
@@ -25,6 +26,7 @@ def insert_file_sequence(form):
                      )
    desc_id = insert_descriptor_table(form, seq_id)
    update_descriptor_to_user(desc_id)
+   parseSequence(form.vars.file_type,form.vars.sequence_file, seq_id)
    return dict(desc_id = desc_id, seq_id=seq_id)
 
 def update_existing_sequence(form,flag):
@@ -33,13 +35,24 @@ def update_existing_sequence(form,flag):
     existing_seq = existing_seq_row.seq
     # make list of ints because form.vars.position is a string
     position_list = []
-    for pos in form.vars.position:
+    test_list = form.vars.position.replace(',',' ').replace('-',' ').split()
+    for pos in test_list:
         position_list.append(int(pos))
 
-    if flag == 'del': # only allowing for single bases, one substring, or multiple substrings
+    # redirect(URL('default', 'index', vars=dict(position_list=position_list)))
+
+    if flag == 'del': # only allowing for a single base, one substring of bases, or multiple substrings
+        new_seq = ''
+        # redirect(URL('default', 'index', vars=dict(pos=position_list[0])))
         if len(position_list) == 1: # deleting single base
-            new_seq = existing_seq[0:position_list[0]]
-            new_seq += existing_seq[position_list[0]+1:]
+            if position_list[0] <= 0: # delete first base
+                new_seq = existing_seq[1:]
+            elif position_list[0] > len(existing_seq): # delete last base
+                # redirect(URL('default', 'index', vars=dict(pos=position_list[0])))
+                new_seq = existing_seq[0:-1]
+            else:
+                new_seq = existing_seq[0:position_list[0]]
+                new_seq += existing_seq[position_list[0]+1:]
         elif len(position_list) % 2 == 0: # deleting at least one substring
             seqs_to_del = []
             new_seq = existing_seq
@@ -52,17 +65,25 @@ def update_existing_sequence(form,flag):
                 new_seq = new_seq.replace(seq,'',1)
         existing_seq_row.update_record(seq=new_seq)
 
-    elif flag == 'add':
+    elif flag == 'add': # inserts to the left of user selected position(s)
         if len(position_list) == 1: # adding in sequence in only one position
-            new_seq = existing_seq[0:position_list[0]+1]
-            new_seq += form.vars.seqs
-            new_seq += existing_seq[position_list[0]+1:]
+            if position_list[0] <= 0: # prepend
+                new_seq = form.vars.seqs + existing_seq
+            elif position_list[0] > len(existing_seq): # append
+                new_seq = existing_seq + form.vars.seqs
+            else: # insert new sequence to left of user selected position
+                new_seq = existing_seq[0:position_list[0]]
+                new_seq += form.vars.seqs
+                new_seq += existing_seq[position_list[0]:]
         elif len(position_list) > 1: # adding after more than one position
-            pass
+            new_seq = ''
+            for pos in position_list:
+                pass
         existing_seq_row.update_record(seq=new_seq)
 
     elif flag == 'replace':
         pass
+    # return length
 
 def insert_descriptor_table(form, seq_id):
    # updates descriptor_table table with sequence name, description, and id
@@ -88,7 +109,7 @@ def insert_annotation(form):
    descriptor_id = db(db.descriptor_table.sequence_name == form.vars.seq_name).select().first().id
    update_annotation_to_descriptor(annotation_id, descriptor_id)
    annotation_name = form.vars.annotation_name
-   update_active_annotations(annotation_id,annotation_name , descriptor_id)
+   # update_active_annotations(annotation_id,annotation_name , descriptor_id)
    return descriptor_id
 
 def update_annotation_to_descriptor(annotation_id, descriptor_id):
@@ -105,8 +126,20 @@ def update_active_annotations(new_id, new_name, desc_id):
 									annotation_name = new_name,
 									descriptor_id = desc_id
 									)
-	#TODO UPDATE DELETES TO WORK WITH ACTIVE ANNOTATIONS
-	
+
+def parseSequence(filetype, filename, seq_id):
+	SEQFILE = open(os.path.join(request.folder+'static/uploads/'+filename))
+
+	if filetype == 'FASTA':
+		sequence = ''
+		firstseq = False
+		for line in SEQFILE:
+			if line.startswith('>'):
+				if firstseq: break
+				firstseq = True
+			else:
+				sequence += line.strip()
+		db(db.sequences.id==seq_id).update(seq = sequence)
 
 
 """
@@ -170,8 +203,7 @@ Used to generate annotation groups for versioning
 db.define_table('active_annotations',
 				Field('annotation_name'),
 				Field('active_id', 'reference annotations'),
-				Field('descriptor_id', 'reference descriptor_table'),
-                fake_migrate=True
+				Field('descriptor_id', 'reference descriptor_table')
 				)
 
 """Linker table for annotations and descriptors"""
