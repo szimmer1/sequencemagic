@@ -27,13 +27,23 @@
         <div class="row">
             <div class="col-md-9 col-xs-12 left-panel">
 
+                {{show_basepairs = False}}
+                {{if seq_length < 200:}}
+                    {{show_basepairs = True}}
+                {{pass}}
                 <div class="row">
                     <div class="col-md-12 col-xs-12 plasmid-wrapper">
                         <!-- plasmid building goes here -->
                         <plasmid id="p1"
                                  sequencelength="{{=seq_length}}"
                                  plasmidheight="500" plasmidwidth="800">
-                            <plasmidtrack id="t1" width="5" radius="150">
+                            <plasmidtrack
+                                    {{if show_basepairs:}}
+                                    trackstyle="stroke: none; fill: none"
+                                    {{else:}}
+                                    trackstyle="stroke: 1px solid lightgrey; fill: lightgrey;"
+                                    {{pass}}
+                                    width="5" radius="150">
                                 <tracklabel id="seq-name"
                                             text="{{=plasmid_name}}" vadjust="-15"></tracklabel>
                                 <tracklabel id="seq-size"
@@ -52,6 +62,11 @@
                                     {{pass}}
                                     {{counter+=1}}
                                 {{pass}}
+                                {{pass}}
+                                {{if show_basepairs:}}
+                                <trackmarker start="0" end="{{=seq_length}}">
+                                    <markerlabel type="path" labelstyle="font-size:10px; font-weight:400;" text="{{=seq}}"></markerlabel>
+                                </trackmarker>
                                 {{pass}}
                             </plasmidtrack>
                         </plasmid>
@@ -148,10 +163,6 @@
             #p1 {
                 width: 100%;
                 height: auto;
-            }
-            #t1 {
-                stroke: 1px solid lightgrey;
-                fill: lightgrey;
             }
             #seq-name {
                 font-size: 25px;
