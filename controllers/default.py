@@ -46,12 +46,12 @@ def index():
 
                if row.user_id== auth.user_id:
                    authorized = True 
-           
+           #FIX THE HIGHLIGHT
            if not authorized: 
                if request.args(0) == auth.user_id: #doing this to ensure the user is the one that the url says 
                    authorized = True               #(you can manually change it. this fixes that)
                
-               
+                   
 
            """if p is None:
                session.flash = T("You need to subscribe")"""
@@ -88,6 +88,14 @@ def subscribe():
     if not checking:
         update_descriptor_to_user(request.args(0))   
     redirect(URL('default', 'index'))
+
+@auth.requires_login()
+def unsubscribe():
+	if db((db.descriptor_table.id==request.args(0)) & (db.descriptor_table.creating_user_id == auth.user_id)):
+		session.flash = T("You can not unsubscribe from a sequence you created.")
+		redirect(URL('default', 'index'))
+	else:
+		db((db.descriptor_to_user.descriptor_id==request.args(0))&(db.descriptor_to_user.user_id==auth.user_id)).delete()
 
 @auth.requires_login()
 def edit():
@@ -181,15 +189,17 @@ def view():
    authorized = False
    if seq is not None:
       header_text = "You're not authorized to edit this sequence"
-      p = db(db.descriptor_table.id == desc_id).select().first()
-      if p.creating_user_id == auth.user_id:
-             authorized = True
-             header_text = sequence_name = p.sequence_name
-             if len(sequence_name.split(" ")) > 1:
-                 plasmid_name = abbreviation(sequence_name)
-             else:
-                 plasmid_name = sequence_name
-      else:
+      
+      pq = db((db.descriptor_to_user.descriptor_id == desc_id)&(db.descriptor_to_user.user_id == db.auth_user.id)&(db.descriptor_to_user.descriptor_id == db.descriptor_table.id)).select(db.descriptor_table.ALL, db.descriptor_to_user.ALL)
+      for p in pq:
+          if p.descriptor_to_user.user_id == auth.user_id:
+                 authorized = True
+                 header_text = sequence_name = p.descriptor_table.sequence_name
+                 if len(sequence_name.split(" ")) > 1:
+                     plasmid_name = abbreviation(sequence_name)
+                 else:
+                     plasmid_name = sequence_name
+          else:
              session.flash = T("You need to login!")
    else:
        return locals()
