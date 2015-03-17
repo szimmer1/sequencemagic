@@ -12,8 +12,9 @@
                     <div class="col-md-12 col-xs-12 plasmid-wrapper">
                         <!-- plasmid building goes here -->
                         <plasmid id="p1"
-                                 sequencelength="{{=seq_length}}">
-                            <plasmidtrack id="t1">
+                                 sequencelength="{{=seq_length}}"
+                                 plasmidheight="500" plasmidwidth="500">
+                            <plasmidtrack id="t1" width="5" radius="150">
                                 <tracklabel id="seq-name"
                                             text="{{=plasmid_name}}"></tracklabel>
                                 <trackscale class="scale-major" interval="50" showlabels="1" labelclass="scale"></trackscale>
@@ -23,8 +24,8 @@
                                     <!-- set user-specific classes -->
                                     {{for annotation in annotations:}}
                                         {{for position in annotation.annotation_location:}}
-                                        <trackmarker class="marker-{{=counter}}" start="{{=position}}" end="{{=(position + annotation.annotation_length)}}">
-                                            <markerlabel class="mlabel" text="{{=annotation.annotation_name}}" vadjust="50" type="path"></markerlabel>
+                                        <trackmarker class="marker marker-{{=counter}}" wadjust="10" start="{{=position}}" end="{{=(position + annotation.annotation_length)}}">
+                                            <markerlabel class="mlabel" text="{{=abbreviation(annotation.annotation_name)}}" vadjust="50" type="path"></markerlabel>
                                         </trackmarker>
                                         {{pass}}
                                     {{pass}}
@@ -105,7 +106,7 @@
             }
             #t1 {
                 stroke: 1px solid lightgrey;
-                fill: lightgreen;
+                fill: lightgrey;
             }
             #seq-name {
                 font-size: 25px;

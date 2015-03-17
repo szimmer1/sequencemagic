@@ -107,6 +107,49 @@ success!
 timestamp: 2015-03-12T14:28:10.341980
 ALTER TABLE annotations ADD creating_user_id INTEGER REFERENCES auth_user (id) ON DELETE CASCADE;
 success!
+<<<<<<< HEAD
+=======
 timestamp: 2015-03-15T17:03:22.866540
 ALTER TABLE annotations ADD annotation_length INTEGER;
+>>>>>>> 4d4d3d9e61e1d43b866651e74311c1be52210943
 success!
+timestamp: 2015-03-15T14:22:27.786693
+CREATE TABLE active_annotations(
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    annotation_name CHAR(512),
+    active_id INTEGER REFERENCES annotations (id) ON DELETE CASCADE
+);
+success!
+timestamp: 2015-03-15T14:37:25.721277
+ALTER TABLE active_annotations ADD descriptor_id INTEGER REFERENCES descriptor_table (id) ON DELETE CASCADE;
+success!
+timestamp: 2015-03-16T11:56:47.591611
+CREATE TABLE active_annotations(
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    annotation_name CHAR(512),
+    active_id INTEGER REFERENCES annotations (id) ON DELETE CASCADE,
+    descriptor_id INTEGER REFERENCES descriptor_table (id) ON DELETE CASCADE
+);
+timestamp: 2015-03-16T11:58:11.769120
+CREATE TABLE active_annotations(
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    annotation_name CHAR(512),
+    active_id INTEGER REFERENCES annotations (id) ON DELETE CASCADE,
+    descriptor_id INTEGER REFERENCES descriptor_table (id) ON DELETE CASCADE
+);
+timestamp: 2015-03-16T12:04:19.657203
+CREATE TABLE active_annotations(
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    annotation_name CHAR(512),
+    active_id INTEGER REFERENCES annotations (id) ON DELETE CASCADE,
+    descriptor_id INTEGER REFERENCES descriptor_table (id) ON DELETE CASCADE
+);
+faked!
+timestamp: 2015-03-16T18:08:42.661772
+CREATE TABLE active_annotations(
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    annotation_name CHAR(512),
+    active_id INTEGER REFERENCES annotations (id) ON DELETE CASCADE,
+    descriptor_id INTEGER REFERENCES descriptor_table (id) ON DELETE CASCADE
+);
+faked!

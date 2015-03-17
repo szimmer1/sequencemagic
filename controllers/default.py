@@ -122,6 +122,8 @@ def view():
    def abbreviation(string):
       r = ""
       l = string.split(" ")
+      if len(l) < 2:
+          return string
       for w in l:
           if not isinstance(w,str):
               continue
@@ -303,9 +305,16 @@ def delete():
     annotation_id = request.vars.annotation_id
     annotations = None
     # check user permissions
-    if auth.user.id <> db(db.descriptor_table.id==desc_id).select().first().creating_user_id:
-        session.flash=T('Invalid Privileges')
-        redirect(URL('default', 'index'))
+    if desc_id:
+        if auth.user.id <> db(db.descriptor_table.id==desc_id).select().first().creating_user_id:
+			session.flash=T('Invalid Privileges')
+			redirect(URL('default', 'index'))
+    elif annotation_id:
+        if auth.user.id <> db(db.annotations.id==annotation_id).select().first().creating_user_id:
+			test = db(db.annotations.id==annotation_id).select().first().creating_user_id
+			session.flash=T('Invalid Privileges')
+			redirect(URL('default', 'index'))
+	'''deleting sequence+associated annotations'''		
     if desc_id:
         # delete discriptor_to_user tuples
         db(db.descriptor_to_user.descriptor_id==desc_id).delete()
@@ -320,15 +329,15 @@ def delete():
         db(db.descriptor_table.id==desc_id).delete()
         # delete annotation tuples
         annotations = db(db.annotation_to_descriptor.descriptor_id==desc_id).select()
+    	for item in annotations:
+        	annot_id = item.annotation_id
+        	db(db.annotations.annotation_id==annot_id).delete()
+        	# delete annotation to descriptor tuples
+        	db(db.annotation_to_descriptor.annotation_id==annot_id).delete()
+	'''deleting single annotation with given annotation id'''
     if annotation_id:
-        annotations = db(db.annotations.id==annotation_id &
-                         db.annotations.creating_user_id==auth.user.id).select()
-
-    for item in annotations:
-        annot_id = item.annotation_id
-        db(db.annotations.annotation_id==annot_id).delete()
-        # delete annotation to descriptor tuples
-        db(db.annotation_to_descriptor.annotation_id==annot_id).delete()
+		db(db.annotation_to_descriptor.annotation_id==annotation_id).delete()
+		db(db.annotations.id==annotation_id).delete()
 
     redirect (URL('default', 'index'))
 
@@ -355,7 +364,7 @@ def update_sequence():
 
     form = SQLFORM.factory(
         Field('name', label='Select a Sequence', requires=IS_IN_SET(categories), required=True),
-        Field('position', 'list', label='Location to Delete')
+        Field('position', label='Location to Delete')
     )
 
     if request.args(0)=='add':
@@ -364,7 +373,7 @@ def update_sequence():
         form = SQLFORM.factory(
             Field('name', label='Select a Sequence to Add to', requires=IS_IN_SET(categories), required=True),
             Field('seqs', 'text', label='Additional Sequence to Add', requires=IS_NOT_EMPTY()),
-            Field('position', 'list', label='Position(s) to Insert Sequence')
+            Field('position', label='Position(s) to Insert Sequence')
         )
     if request.args(0)=='replace':
         del_active = False
@@ -372,20 +381,23 @@ def update_sequence():
         form = SQLFORM.factory(
             Field('name', label='Select a Sequence', requires=IS_IN_SET(categories), required=True),
             Field('seqs', 'text', label='Replacement Sequence', requires=IS_NOT_EMPTY()),
-            Field('position', 'list', label='Position(s) to replace with above Sequence')
+            Field('position', label='Position(s) to replace with above Sequence')
         )
 
     if form.process().accepted:
         session.flash = T("Your form was accepted")
         if request.args(0)=='add':
             update_existing_sequence(form,'add')
-            redirect(URL('default', 'index'))
+            redirect(URL('default', 'view',
+                         args=db(db.descriptor_table.sequence_name==form.vars.name).select().first().id))
         elif request.args(0)=='replace':
             update_existing_sequence(form,'replace')
-            redirect(URL('default', 'index'))
+            redirect(URL('default', 'view',
+                         args=db(db.descriptor_table.sequence_name==form.vars.name).select().first().id))
      	else:
             length = update_existing_sequence(form,'del')
-            redirect(URL('default', 'index', vars=dict(position=length)))
+            redirect(URL('default', 'view',
+                         args=db(db.descriptor_table.sequence_name==form.vars.name).select().first().id))
     return locals()
 
 def user():
