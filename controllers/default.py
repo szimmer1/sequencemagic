@@ -194,6 +194,9 @@ def view():
       for p in pq:
           if p.descriptor_to_user.user_id == auth.user_id:
                  authorized = True
+                 is_subscriptor = True
+                 if p.descriptor_table.creating_user_id == auth.user_id:
+                     is_creator = True
                  header_text = sequence_name = p.descriptor_table.sequence_name
                  if len(sequence_name.split(" ")) > 1:
                      plasmid_name = abbreviation(sequence_name)
