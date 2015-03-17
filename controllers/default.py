@@ -92,11 +92,14 @@ def subscribe():
 
 @auth.requires_login()
 def unsubscribe():
-	if db((db.descriptor_table.id==request.args(0)) & (db.descriptor_table.creating_user_id == auth.user_id)):
-		session.flash = T("You can not unsubscribe from a sequence you created.")
-		redirect(URL('default', 'index'))
-	else:
-		db((db.descriptor_to_user.descriptor_id==request.args(0))&(db.descriptor_to_user.user_id==auth.user_id)).delete()
+	items = db((db.descriptor_table.id==request.args(0))).select()
+	for item in items:
+		if item.creating_user_id==auth.user_id:
+			session.flash = T("You can not unsubscribe from a sequence you created.")
+			redirect(URL('default', 'index', vars={'test':'test'}))
+	
+	db((db.descriptor_to_user.descriptor_id==request.args(0))&(db.descriptor_to_user.user_id==auth.user_id)).delete()
+	redirect(URL('default', 'index', args = [auth.user_id]))
 
 @auth.requires_login()
 def edit():
@@ -146,7 +149,7 @@ def view():
    annotationList = sequence_row = seq = seq_type = desc_name = \
        desc_description = date_created = desc_author = list_of_subscriptors = \
        seq_length = annotation_list = plasmid_name = user_chosen = \
-       selected_user_id = None
+       selected_user_id = annotation_form = is_subscriptor = is_creator = None
    found_sequence = False
    
    desc_id = request.args(0) or None
@@ -244,27 +247,22 @@ def view():
 
 	   
        """Add annotation form"""
-       categories = []
-       subscribed_descriptors = db(db.descriptor_to_user.user_id == auth.user_id).select(db.descriptor_to_user.descriptor_id)
-       for descriptor in subscribed_descriptors: #run through seq names
-           seq = db(db.descriptor_table.id == descriptor.descriptor_id).select(db.descriptor_table.sequence_name).first()
-           categories.append(seq.sequence_name)
+       if authorized and seq is not None:
+          annotation_form = SQLFORM.factory(
+              Field('seq_name', writable=False, readable=False),
+              Field('annotation_name', requires=IS_NOT_EMPTY()),
+              Field('annotation_position', 'list:integer'),
+              Field('length', 'integer'),
+              Field('description', 'text')
+          )
+          annotation_form.vars.seq_name = sequence_name
 
-       form = SQLFORM.factory(
-           Field('seq_name', writable=False),
-           Field('annotation_name', requires=IS_NOT_EMPTY()),
-           Field('annotation_position', 'list:integer'),
-           Field('length', 'integer'),
-           Field('description', 'text')
-       )
-       form.vars.seq_name = seq.sequence_name
-
-       if form.process().accepted:
-           session.flash = T("Your form was accepted")
-           descriptor_id = insert_annotation(form) #<-- defined in the models
-           redirect(URL('default', 'view', args=[descriptor_id]))
-       else:
-           pass
+          if annotation_form.process().accepted:
+              session.flash = T("Your form was accepted")
+              descriptor_id = insert_annotation(annotation_form) #<-- defined in the models
+              redirect(URL('default', 'view', args=[descriptor_id]))
+          else:
+              pass
 
 	   
 
@@ -403,7 +401,7 @@ def delete():
 		db(db.annotations.id==annotation_id).delete()
 		redirect(URL('default', 'view', args=[desc_id]))
 
-    redirect (URL('default', 'index', args=[2]))
+    redirect (URL('default', 'index', args=[auth.user_id]))
 
     return
 
