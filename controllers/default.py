@@ -90,6 +90,14 @@ def subscribe():
     redirect(URL('default', 'index'))
 
 @auth.requires_login()
+def unsubscribe():
+	if db((db.descriptor_table.id==request.args(0)) & (db.descriptor_table.creating_user_id == auth.user_id)):
+		session.flash = T("You can not unsubscribe from a sequence you created.")
+		redirect(URL('default', 'index'))
+	else:
+		db((db.descriptor_to_user.descriptor_id==request.args(0))&(db.descriptor_to_user.user_id==auth.user_id)).delete()
+
+@auth.requires_login()
 def edit():
     # authorize the user to edit
     authorized = False
@@ -231,7 +239,28 @@ def view():
 	      annotation_history.append(db(db.annotations.id==annot_id).select().first())
 
 	   
+       """Add annotation form"""
+       categories = []
+       subscribed_descriptors = db(db.descriptor_to_user.user_id == auth.user_id).select(db.descriptor_to_user.descriptor_id)
+       for descriptor in subscribed_descriptors: #run through seq names
+           seq = db(db.descriptor_table.id == descriptor.descriptor_id).select(db.descriptor_table.sequence_name).first()
+           categories.append(seq.sequence_name)
 
+       form = SQLFORM.factory(
+           Field('seq_name', writable=False),
+           Field('annotation_name', requires=IS_NOT_EMPTY()),
+           Field('annotation_position', 'list:integer'),
+           Field('length', 'integer'),
+           Field('description', 'text')
+       )
+       form.vars.seq_name = seq.sequence_name
+
+       if form.process().accepted:
+           session.flash = T("Your form was accepted")
+           descriptor_id = insert_annotation(form) #<-- defined in the models
+           redirect(URL('default', 'view', args=[descriptor_id]))
+       else:
+           pass
 
 	   
 
