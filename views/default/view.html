@@ -12,7 +12,7 @@
             <ul class="dropdown-menu">
                 {{if is_creator:}}
                 <li>
-                    <a href="{{=URL('default', 'delete', vars=dict(desc_id=desc_id))}}" style="background: red; color: white;">Delete</a>
+                    <a href="{{=URL('default', 'delete', vars=dict(desc_id=desc_id))}}">Delete</a>
                 </li>
                 {{elif is_subscriptor:}}
                 <li>
