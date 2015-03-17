@@ -261,45 +261,36 @@ def view():
       )
       annotation_form.vars.seq_name = sequence_name
 
-          if annotation_form.process().accepted:
-              session.flash = T("Your form was accepted")
-              descriptor_id = insert_annotation(annotation_form) #<-- defined in the models
-              redirect(URL('default', 'view', args=[descriptor_id]))
+      if annotation_form.process().accepted:
+          session.flash = T("Your form was accepted")
+          descriptor_id = insert_annotation(annotation_form) #<-- defined in the models
+          redirect(URL('default', 'view', args=[descriptor_id]))
+      else:
+          pass
+
+      """Update Sequence Form"""
+      update_sequence_form = SQLFORM.factory(
+              Field('name', readable=False, writable=False),
+              Field('seqs', 'text', label='Additional Sequence to Add', requires=IS_NOT_EMPTY()),
+              Field('position', label='Position(s) to Insert Sequence'),
+              Field('form_action', readable=False)
+          )
+      update_sequence_form.vars.form_action = 'add'
+      update_sequence_form.vars.name = sequence_name
+      if update_sequence_form.process().accepted:
+          session.flash = T("Your form was accepted")
+          if update_sequence_form.vars.form_action == 'add':
+              update_existing_sequence(update_sequence_form,'add')
+              redirect(URL('default', 'view',
+                           args=db(db.descriptor_table.sequence_name==update_sequence_form.vars.name).select().first().id))
+          elif update_sequence_form.vars.form_action == 'replace':
+              update_existing_sequence(update_sequence_form,'replace')
+              redirect(URL('default', 'view',
+                           args=db(db.descriptor_table.sequence_name==update_sequence_form.vars.name).select().first().id))
           else:
-              pass
-
-       """Update Sequence Form"""
-       categories = []
-       del_active = True
-       add_active = False
-
-   for seq in db(db.descriptor_table).select(): #run through seq names
-       if (seq.creating_user_id == auth.user_id):
-           categories.append(seq.sequence_name)
-
-       update_sequence_form = SQLFORM.factory(
-               Field('name', readable=False, writable=False),
-               Field('seqs', 'text', label='Additional Sequence to Add', requires=IS_NOT_EMPTY()),
-               Field('position', label='Position(s) to Insert Sequence'),
-               Field('form_action', readable=False)
-           )
-       update_sequence_form.vars.form_action = 'add'
-       update_sequence_form.vars.name = sequence_name
-
-       if update_sequence_form.process().accepted:
-           session.flash = T("Your form was accepted")
-           if update_sequence_form.vars.form_action == 'add':
-               update_existing_sequence(update_sequence_form,'add')
-               redirect(URL('default', 'view',
-                            args=db(db.descriptor_table.sequence_name==update_sequence_form.vars.name).select().first().id))
-           elif update_sequence_form.vars.form_action == 'replace':
-               update_existing_sequence(update_sequence_form,'replace')
-               redirect(URL('default', 'view',
-                            args=db(db.descriptor_table.sequence_name==update_sequence_form.vars.name).select().first().id))
-           else:
-               length = update_existing_sequence(update_sequence_form,'del')
-               redirect(URL('default', 'view',
-                            args=db(db.descriptor_table.sequence_name==update_sequence_form.vars.name).select().first().id))
+              length = update_existing_sequence(update_sequence_form,'del')
+              redirect(URL('default', 'view',
+                           args=db(db.descriptor_table.sequence_name==update_sequence_form.vars.name).select().first().id))
 
    return locals()
 
