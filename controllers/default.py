@@ -420,10 +420,12 @@ def delete():
 	
 	'''deleting sequence+associated annotations'''		
     if desc_id:
+		#in tools.py
 		delete_sequence(desc_id)
 	
     '''deleting single annotation with given annotation id'''
     if annotation_id:
+		#in tools.py
 		delete_annotation(annotation_id)
     return
 
