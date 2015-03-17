@@ -153,3 +153,5 @@ CREATE TABLE active_annotations(
     descriptor_id INTEGER REFERENCES descriptor_table (id) ON DELETE CASCADE
 );
 faked!
+success!
+success!
