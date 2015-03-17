@@ -118,6 +118,7 @@
 													{{for annotation in annotation_list[selected_user_id]:}}
                                                     <tr>
                                                         <td>{{=annotation.annotation_name}}<br>{{=annotation.date_created}}</td>
+                                                        {{if selected_user_id == auth.user_id:}}
                                                         <td>
                                                             <a class="btn btn-primary" href="#">
                                                                     Edit <i class="fa fa-wrench"></i>
@@ -128,6 +129,7 @@
                                                                     <i class="fa fa-trash"></i>
                                                             </a>
                                                         </td>
+                                                        {{pass}}
                                                     </tr>
                                                     {{pass}}
                                                     {{else:}}
