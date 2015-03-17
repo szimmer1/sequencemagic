@@ -281,7 +281,8 @@ def upload():
         Field('name', label='Sequence name', required=True),
         Field('file_type', label = "File Type", requires=IS_IN_SET(categories)),
         Field('sequence_file', 'upload', uploadfolder=request.folder+'/static/uploads'),
-        Field('description', 'text')
+        Field('description', 'text'),
+		csv = False
     )
     #form.add_button('Enter Sequence Manually', URL('upload', args=['man']))
     
@@ -291,7 +292,8 @@ def upload():
         form = SQLFORM.factory(
             Field('name', label = 'Sequence name', required = True),
             Field('seqs', 'text', requires=IS_NOT_EMPTY()),
-            Field('description', 'text')
+            Field('description', 'text'),
+			csv = False
         )
         #form.add_button('Enter Sequence File', URL('upload', args=[]))
 
@@ -327,7 +329,8 @@ def upload_annotation():
         Field('annotation_name', requires=IS_NOT_EMPTY()),
         Field('annotation_position', 'list:integer'),
         Field('length', 'integer'),
-        Field('description', 'text')
+        Field('description', 'text'),
+		csv = False
     )
 
     if form.process().accepted:
@@ -393,11 +396,13 @@ def delete():
         	db(db.annotation_to_descriptor.annotation_id==annot_id).delete()
 	'''deleting single annotation with given annotation id'''
     if annotation_id:
+		desc_id=db(db.active_annotations.active_id==annotation_id).select().first().descriptor_id
 		db(db.active_annotations.active_id==annotation_id).delete()
 		db(db.annotation_to_descriptor.annotation_id==annotation_id).delete()
 		db(db.annotations.id==annotation_id).delete()
+		redirect(URL('default', 'view', args=[desc_id]))
 
-    redirect (URL('default', 'index'))
+    redirect (URL('default', 'index', args=[2]))
 
     return
 
