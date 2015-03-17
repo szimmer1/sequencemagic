@@ -127,13 +127,19 @@ def update_descriptor_to_user(desc_id):
    db.descriptor_to_user.insert(descriptor_id = desc_id)
 
 def insert_annotation(form):
+   existing_desc_row = db(db.descriptor_table.sequence_name == form.vars.seq_name).select().first().seq_id
+   existing_seq_row = db(db.sequences.id == existing_desc_row).select().first()
+   descriptor_id = db(db.descriptor_table.sequence_name == form.vars.seq_name).select().first().id
+   seq_len = len(existing_seq_row.seq)
+   if form.vars.length > seq_len:
+       session.flash = T("Length of annotation was too long")
+       redirect(URL('default','view', args=descriptor_id))
    annotation_id = db.annotations.insert(annotation_name = form.vars.annotation_name,
                               annotation_location = form.vars.annotation_position,
                               date_created = datetime.utcnow(),
                               annotation_description = form.vars.description,
                               annotation_length = form.vars.length
                               )
-   descriptor_id = db(db.descriptor_table.sequence_name == form.vars.seq_name).select().first().id
    update_annotation_to_descriptor(annotation_id, descriptor_id)
    annotation_name = form.vars.annotation_name
    update_active_annotations(annotation_id,annotation_name , descriptor_id)
