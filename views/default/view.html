@@ -34,19 +34,21 @@
                         <!-- plasmid building goes here -->
                         <plasmid id="p1"
                                  sequencelength="{{=seq_length}}"
-                                 plasmidheight="500" plasmidwidth="500">
+                                 plasmidheight="500" plasmidwidth="800">
                             <plasmidtrack id="t1" width="5" radius="150">
                                 <tracklabel id="seq-name"
-                                            text="{{=plasmid_name}}"></tracklabel>
-                                <trackscale class="scale-major" interval="50" showlabels="1" labelclass="scale"></trackscale>
+                                            text="{{=plasmid_name}}" vadjust="-15"></tracklabel>
+                                <tracklabel id="seq-size"
+                                            text="{{=seq_length}}bp" vadjust="15"></tracklabel>
+                                <trackscale class="scale-major" interval="{{=labelFreq(seq_length)}}" showlabels="1" labelclass="scale"></trackscale>
                                 {{if annotation_list is not None:}}
                                 {{counter=0}}
                                 {{for userid, annotations in annotation_list.iteritems():}}
                                     <!-- set user-specific classes -->
-                                    {{for annotation in annotations:}}
+                                    {{for index,annotation in enumerate(annotations):}}
                                         {{for position in annotation.annotation_location:}}
-                                        <trackmarker class="marker marker-{{=counter}}" wadjust="10" start="{{=position}}" end="{{=(position + annotation.annotation_length)}}">
-                                            <markerlabel class="mlabel" text="{{=abbreviation(annotation.annotation_name)}}" vadjust="50" type="path"></markerlabel>
+                                        <trackmarker class="marker marker-{{=counter}}" wadjust="10" {{if avoid[index] == 1:}}vadjust="-15"{{else:}}vadjust="5"{{pass}} start="{{=position}}" end="{{=(position + annotation.annotation_length)}}">
+                                            <markerlabel class="mlabel" text="{{=abbreviation(annotation.annotation_name)}}" {{if avoid[index] == 1:}}vadjust="-25"{{else:}}vadjust="30"{{pass}} type="path"></markerlabel>
                                         </trackmarker>
                                         {{pass}}
                                     {{pass}}
@@ -84,10 +86,12 @@
                         <div class="row">
                             <div class="col-md-2 col-xs-2 user-nav">
                                 <ul class="nav nav-tabs nav-stacked">
-                                    {{for index, user in enumerate(list_of_subscriptors):}}
-                                        <li class="btn btn-user btn-{{=index}}{{if user.id == selected_user_id:}} active-button{{pass}}">
+                                    {{counter2=0}}
+                                    {{for user in list_of_subscriptors:}}
+                                        <li class="btn btn-user btn-{{=counter2}}{{if user.id == selected_user_id:}} active-button{{pass}}">
                                             <a href="{{=URL('default', 'view', args=[desc_id], vars=dict(user_id=user.id))}}">{{=abbreviation(user.first_name + " " + user.last_name)}}</a>
                                         </li>
+                                    {{counter2+=1}}
                                     {{pass}}
                                 </ul>
                             </div>
@@ -97,7 +101,7 @@
                                             <table class="table table-hover">
                                                 <thead></thead>
                                                 <tbody>
-                                                    {{if annotation_list.has_key(selected_user_id):}}
+                                                    {{if len(annotation_list[selected_user_id]) > 0:}}
 													{{for annotation in annotation_list[selected_user_id]:}}
                                                     <tr>
                                                         <td>{{=annotation.annotation_name}}<br>{{=annotation.date_created}}</td>
@@ -144,6 +148,8 @@
         <!-- Custom plasmid styles -->
         <style>
             #p1 {
+                width: 100%;
+                height: auto;
             }
             #t1 {
                 stroke: 1px solid lightgrey;
@@ -157,6 +163,7 @@
             }
             .scale {
                 fill: #888888;
+                font-size: 12px;
             }
             svg {
                 width: 500px;

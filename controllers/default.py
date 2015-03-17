@@ -143,6 +143,41 @@ def view():
           r += w[0].upper()
       return r
 
+   """Plasmid functions"""
+   def labelFreq(length):
+       if length < 500:
+          return 50
+       elif length < 1000:
+          return 100
+       elif length < 5000:
+           return 500
+       else:
+           return 5000
+
+   def getAvoids(annotation_dict):
+       flat_annotation_list = []
+       avoids = []
+       # flatten annotation_list
+       for userid, annotations_list in annotation_dict.iteritems():
+           flat_annotation_list.extend(annotations_list)
+       # initialize avoids array
+       for i in range(len(flat_annotation_list)):
+           avoids.append(0)
+
+       # compare annotations
+       for index, this_annotation in enumerate(flat_annotation_list):
+           compare_annotations = flat_annotation_list[(index+1):]
+           for an_annotation in compare_annotations:
+              if this_annotation.annotation_location[0] < (an_annotation.annotation_location[0] + an_annotation.annotation_length) \
+              or (this_annotation.annotation_location[0] + this_annotation.annotation_length) > an_annotation.annotation_location[0]:
+                 if avoids[index] == 0:
+                     avoids[index] = 1
+                 else:
+                     avoids[index] = 0
+
+       return avoids
+
+
    """
    Allows a user to visualize a particular sequence with it's annotations,
    if any are present. Requires seq they want to see to be passed via URL,
@@ -152,7 +187,7 @@ def view():
        desc_description = date_created = desc_author = list_of_subscriptors = \
        seq_length = annotation_list = plasmid_name = user_chosen = \
        selected_user_id = annotation_form = is_subscriptor = is_creator = \
-       update_sequence_form = None
+       update_sequence_form = avoid = None
    found_sequence = False
    
    desc_id = request.args(0) or None
@@ -174,8 +209,6 @@ def view():
    desc_description = desc_row.sequence_description
    date_created = desc_row.date_created
    seq_id = desc_row.seq_id
-   
-   list_of_subscriptors = db((db.descriptor_to_user.descriptor_id == desc_id) & (db.descriptor_to_user.user_id == db.auth_user.id)).select(db.auth_user.ALL)
 
    sequence_row = db(db.sequences.id == seq_id).select().first()
    if sequence_row.seq is not None:
@@ -225,19 +258,23 @@ def view():
    pass
    
    '''Query for Active Annotations''' #annotation_list used in view
+   list_of_subscriptors = db((db.descriptor_to_user.descriptor_id == desc_id) & (db.descriptor_to_user.user_id == db.auth_user.id)).select(db.auth_user.ALL, orderby=db.auth_user.id)
    annotation_list = {} #(dict)
    active_id_list = []  #(list)
+
+   for subscriptor in list_of_subscriptors:
+       annotation_list[subscriptor.id] = []
    for active_annotation in db(db.active_annotations.descriptor_id==desc_id).select():
        active_id_list.append(active_annotation.active_id)
    for active_id in active_id_list:
        annotation_row = db(db.annotations.id==active_id).select()
        for annotation in annotation_row:
-           #if annotation.creating_user_id in annotation_list: 
+           #if annotation.creating_user_id in annotation_list:
            if annotation_list.has_key(annotation.creating_user_id):
                annotation_list[annotation.creating_user_id].append(db(db.annotations.id==active_id).select().first())
-           else:
-		       annotation_list[annotation.creating_user_id] =[db(db.annotations.id==active_id).select().first()]
    pass
+
+   avoid = getAvoids(annotation_list)
 
 
    '''Annotation Update History''' #annotation_history list used in view
@@ -294,6 +331,7 @@ def view():
               redirect(URL('default', 'view',
                            args=db(db.descriptor_table.sequence_name==update_sequence_form.vars.name).select().first().id))
 
+   """Last updated queries"""
    query_last_annotator = db((db.descriptor_table.id == desc_id) & (db.descriptor_table.id == db.annotation_to_descriptor.descriptor_id) & (db.annotation_to_descriptor.annotation_id == db.annotations.id) & (db.annotations.creating_user_id == db.auth_user.id)).select(db.annotations.creating_user_id, db.annotations.date_created, db.auth_user.first_name, db.auth_user.last_name, orderby=~db.annotations.date_created)
    last_annotator = None
    for row in query_last_annotator:
