@@ -81,7 +81,7 @@ def update_existing_sequence(form,flag):
             existing_seq_row.update_record(seq=new_seq)
         elif len(position_list) > 1: # adding left of more than one position
             for pos in range(0, len(position_list), 1):
-                updated_row = db(db.sequences.id == existing_desc_row).select().first()
+                updated_row = db(db.sequences.id == existing_desc_row_seq).select().first()
                 updated_seq = updated_row.seq
                 if position_list[pos] > len(existing_seq):
                     updated_seq += form.vars.seqs

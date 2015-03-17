@@ -2,8 +2,12 @@
 
 {{if found_sequence:}}
     <h1 style="display: inline-block;">{{=desc_name}} <small>by {{=desc_author}} on {{if date_created is not None:}}{{=date_created.strftime("%m/%d/%y")}}{{pass}}</small></h1>
-
-
+	
+	{{if last_annotator is not None:}}
+	<p>
+	<h3 style="display: inline-block;">Last edited by <small>by {{=last_annotator.auth_user.first_name}} {{=last_annotator.auth_user.last_name}}  on {{if last_annotator.annotations.date_created is not None:}}{{=last_annotator.annotations.date_created.strftime("%m/%d/%y %H:%M:%S-%p")}}{{pass}}</small></h3>
+	</p>
+	{{pass}}
 
         <div class="btn-group pull-right" style="margin-top: 21px;">
             <button class="btn btn-primary dropdown-toggle" data-toggle="dropdown">
@@ -223,9 +227,9 @@
                 })
 
                 // update sequence buttons
-
-                /*** Hide form action ***/
+                /*** Hide form action, sequence name ***/
                 $('#no_table_form_action__row').hide();
+                $('#no_table_name__row').hide();
 
                 function updateActive($obj) {
                     $obj.siblings('button').removeClass('active');

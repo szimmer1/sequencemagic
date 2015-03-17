@@ -57,4 +57,5 @@ def delete_sequence(descriptor_id):
 
     redirect(URL('default', 'index', args=[auth.user_id]))
 
-    
+def delete_subscription(descriptor_id):
+    db((db.descriptor_to_user.descriptor_id==descriptor_id) & (db.descriptor_to_user.user_id==auth.user.id)).delete()
