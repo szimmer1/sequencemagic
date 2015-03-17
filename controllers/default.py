@@ -46,15 +46,13 @@ def index():
 
                if row.user_id== auth.user_id:
                    authorized = True 
-           
+           #FIX THE HIGHLIGHT
            if not authorized: 
                if request.args(0) == auth.user_id: #doing this to ensure the user is the one that the url says 
                    authorized = True               #(you can manually change it. this fixes that)
                
-               
+                   
 
-               if row.user_id == auth.user_id:
-                   authorized = True
            """if p is None:
                session.flash = T("You need to subscribe")"""
 
@@ -90,6 +88,14 @@ def subscribe():
     if not checking:
         update_descriptor_to_user(request.args(0))   
     redirect(URL('default', 'index'))
+
+@auth.requires_login()
+def unsubscribe():
+	if db((db.descriptor_table.id==request.args(0)) & (db.descriptor_table.creating_user_id == auth.user_id)):
+		session.flash = T("You can not unsubscribe from a sequence you created.")
+		redirect(URL('default', 'index'))
+	else:
+		db((db.descriptor_to_user.descriptor_id==request.args(0))&(db.descriptor_to_user.user_id==auth.user_id)).delete()
 
 @auth.requires_login()
 def edit():
@@ -139,7 +145,7 @@ def view():
    annotationList = sequence_row = seq = seq_type = desc_name = \
        desc_description = date_created = desc_author = list_of_subscriptors = \
        seq_length = annotation_list = plasmid_name = user_chosen = \
-       selected_user_id = None
+       selected_user_id = annotation_form = is_subscriptor = is_creator = None
    found_sequence = False
    
    desc_id = request.args(0) or None
@@ -183,15 +189,20 @@ def view():
    authorized = False
    if seq is not None:
       header_text = "You're not authorized to edit this sequence"
-      p = db(db.descriptor_table.id == desc_id).select().first()
-      if p.creating_user_id == auth.user_id:
-             authorized = True
-             header_text = sequence_name = p.sequence_name
-             if len(sequence_name.split(" ")) > 1:
-                 plasmid_name = abbreviation(sequence_name)
-             else:
-                 plasmid_name = sequence_name
-      else:
+      
+      pq = db((db.descriptor_to_user.descriptor_id == desc_id)&(db.descriptor_to_user.user_id == db.auth_user.id)&(db.descriptor_to_user.descriptor_id == db.descriptor_table.id)).select(db.descriptor_table.ALL, db.descriptor_to_user.ALL)
+      for p in pq:
+          if p.descriptor_to_user.user_id == auth.user_id:
+                 authorized = True
+                 is_subscriptor = True
+                 if p.descriptor_table.creating_user_id == auth.user_id:
+                     is_creator = True
+                 header_text = sequence_name = p.descriptor_table.sequence_name
+                 if len(sequence_name.split(" ")) > 1:
+                     plasmid_name = abbreviation(sequence_name)
+                 else:
+                     plasmid_name = sequence_name
+          else:
              session.flash = T("You need to login!")
    else:
        return locals()
@@ -231,7 +242,23 @@ def view():
 	      annotation_history.append(db(db.annotations.id==annot_id).select().first())
 
 	   
+       """Add annotation form"""
+       if authorized and seq is not None:
+          annotation_form = SQLFORM.factory(
+              Field('seq_name', writable=False, readable=False),
+              Field('annotation_name', requires=IS_NOT_EMPTY()),
+              Field('annotation_position', 'list:integer'),
+              Field('length', 'integer'),
+              Field('description', 'text')
+          )
+          annotation_form.vars.seq_name = sequence_name
 
+          if annotation_form.process().accepted:
+              session.flash = T("Your form was accepted")
+              descriptor_id = insert_annotation(annotation_form) #<-- defined in the models
+              redirect(URL('default', 'view', args=[descriptor_id]))
+          else:
+              pass
 
 	   
 
@@ -249,7 +276,8 @@ def upload():
         Field('name', label='Sequence name', required=True),
         Field('file_type', label = "File Type", requires=IS_IN_SET(categories)),
         Field('sequence_file', 'upload', uploadfolder=request.folder+'/static/uploads'),
-        Field('description', 'text')
+        Field('description', 'text'),
+		csv = False
     )
     #form.add_button('Enter Sequence Manually', URL('upload', args=['man']))
     
@@ -259,7 +287,8 @@ def upload():
         form = SQLFORM.factory(
             Field('name', label = 'Sequence name', required = True),
             Field('seqs', 'text', requires=IS_NOT_EMPTY()),
-            Field('description', 'text')
+            Field('description', 'text'),
+			csv = False
         )
         #form.add_button('Enter Sequence File', URL('upload', args=[]))
 
@@ -295,7 +324,8 @@ def upload_annotation():
         Field('annotation_name', requires=IS_NOT_EMPTY()),
         Field('annotation_position', 'list:integer'),
         Field('length', 'integer'),
-        Field('description', 'text')
+        Field('description', 'text'),
+		csv = False
     )
 
     if form.process().accepted:
@@ -361,11 +391,13 @@ def delete():
         	db(db.annotation_to_descriptor.annotation_id==annot_id).delete()
 	'''deleting single annotation with given annotation id'''
     if annotation_id:
+		desc_id=db(db.active_annotations.active_id==annotation_id).select().first().descriptor_id
 		db(db.active_annotations.active_id==annotation_id).delete()
 		db(db.annotation_to_descriptor.annotation_id==annotation_id).delete()
 		db(db.annotations.id==annotation_id).delete()
+		redirect(URL('default', 'view', args=[desc_id]))
 
-    redirect (URL('default', 'index'))
+    redirect (URL('default', 'index', args=[2]))
 
     return
 

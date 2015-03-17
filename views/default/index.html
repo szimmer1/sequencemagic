@@ -66,6 +66,13 @@
                         </div>
                     {{pass}}
             {{pass}}
+        {{elif query is None and header_text == "My sequences":}}
+            
+                        <div class="col-md-4">
+                            <div class="thumbnail">
+                                Please suscribe or upload a sequence
+                            </div>
+                        </div>
         {{else:}}
             {{for descriptor in all_descriptors:}}
                     <div class="col-md-4">
