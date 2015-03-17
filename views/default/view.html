@@ -54,11 +54,20 @@
                     </div>
 
                     <div class="col-md-12 col-xs-12 add-annotation-wrapper">
+                        {{if request.vars.error_string:}}
+                                {{=request.vars.error_string}}<br>
+                            {{pass}}
                         <button class="btn btn-primary add-annotation">
                             <i class="fa fa-plus"></i> Add an annotation
                         </button>
                         <div class="annotation-form-wrapper" style="display: none;">
                             {{=annotation_form}}
+                        </div>
+                        <button class="btn btn-primary update_sequence">
+                            <i class="fa fa-plus"></i> Update Sequence
+                        </button>
+                        <div class="annotation-form-wrapper" style="display: none;">
+                            <ul class="btn-group">
                         </div>
                     </div>
 
@@ -101,11 +110,6 @@
                                                 </tbody>
                                             </table>
                                     </div>
-                                {{else:}}
-                                    <h3>Choose a user</h3>
-                                    <p>Annotations list goes here. A possibility is to create a tab for each user and show the annotations that user has added, like so</p>
-                                    <p>Annotations can be color coded to the user</p>
-                                    <p>Any user subscribed to the plasmid can add annotations</p>
                                 {{pass}}
                             </div>
                         </div>

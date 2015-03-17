@@ -40,6 +40,12 @@
             <div>
             <a class="btn btn-primary" href="{{=URL('default', 'index')}}">Main Page</a>
             </div>
+        {{elif empty_query:}}
+        				<div class="col-md-4">
+                            <div class="thumbnail">
+                               Please suscribe or upload a sequence
+                            </div>
+                        </div>
         {{elif query is not None:}}
             {{for row in query:}}
                 {{all_descriptors = db(db.descriptor_table.id == row.descriptor_id).select(db.descriptor_table.ALL)}}
@@ -66,13 +72,7 @@
                         </div>
                     {{pass}}
             {{pass}}
-        {{elif query is None and header_text == "My sequences":}}
-            
-                        <div class="col-md-4">
-                            <div class="thumbnail">
-                                Please suscribe or upload a sequence
-                            </div>
-                        </div>
+        
         {{else:}}
             {{for descriptor in all_descriptors:}}
                     <div class="col-md-4">
