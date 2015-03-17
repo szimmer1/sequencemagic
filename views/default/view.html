@@ -61,8 +61,8 @@
                                             <table class="table table-hover">
                                                 <thead></thead>
                                                 <tbody>
-                                                    {{if len(annotation_list[selected_user_id]) > 0:}}
-                                                    {{for annotation in annotation_list[selected_user_id]:}}
+                                                    {{if annotation_list.has_key(selected_user_id):}}
+													{{for annotation in annotation_list[selected_user_id]:}}
                                                     <tr>
                                                         <td>{{=annotation.annotation_name}}<br>{{=annotation.date_created}}</td>
                                                         <td>
@@ -97,7 +97,16 @@
             </div>
 
             <div class="col-md-3 col-xs-12">
-                <p>It would be cool if we had an update stream right over here</p>
+				<h4> Update History </h4>
+				{{for annotation in annotation_history:}}
+				<li>
+				{{=annotation.annotation_name}}<br>{{=annotation.date_created}}<br>{{=annotation.creating_user_id}}
+				</li>
+				<!--
+					need button: 'make active' are you sure?
+				    need button: 'revert'
+				--->	
+				{{pass}}
             </div>
 
         <!-- Custom plasmid styles -->

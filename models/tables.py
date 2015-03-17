@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from datetime import datetime
+import os
 
 """
 Define get_first_name function for finding users names,
@@ -25,6 +26,7 @@ def insert_file_sequence(form):
                      )
    desc_id = insert_descriptor_table(form, seq_id)
    update_descriptor_to_user(desc_id)
+   parseSequence(form.vars.file_type,form.vars.sequence_file, seq_id)
    return dict(desc_id = desc_id, seq_id=seq_id)
 
 def update_existing_sequence(form,flag):
@@ -124,7 +126,20 @@ def update_active_annotations(new_id, new_name, desc_id):
 									annotation_name = new_name,
 									descriptor_id = desc_id
 									)
-	#TODO UPDATE DELETES TO WORK WITH ACTIVE ANNOTATIONS
+
+def parseSequence(filetype, filename, seq_id):
+	SEQFILE = open(os.path.join(request.folder+'static/uploads/'+filename))
+
+	if filetype == FASTA:
+		sequence = ''
+		firstseq = False
+		for line in SEQFILE:
+			if line.startswith('>'):
+				if firstseq: break
+				firstseq = True
+			else:
+				sequence += line.strip()
+		db(db.sequences.id==seq_id).update(seq = sequence)
 
 
 """
