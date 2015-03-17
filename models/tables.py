@@ -130,7 +130,7 @@ def update_active_annotations(new_id, new_name, desc_id):
 def parseSequence(filetype, filename, seq_id):
 	SEQFILE = open(os.path.join(request.folder+'static/uploads/'+filename))
 
-	if filetype == FASTA:
+	if filetype == 'FASTA':
 		sequence = ''
 		firstseq = False
 		for line in SEQFILE:
@@ -203,8 +203,7 @@ Used to generate annotation groups for versioning
 db.define_table('active_annotations',
 				Field('annotation_name'),
 				Field('active_id', 'reference annotations'),
-				Field('descriptor_id', 'reference descriptor_table'),
-                fake_migrate=True
+				Field('descriptor_id', 'reference descriptor_table')
 				)
 
 """Linker table for annotations and descriptors"""
