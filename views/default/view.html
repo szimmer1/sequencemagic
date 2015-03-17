@@ -60,14 +60,19 @@
                         <button class="btn btn-primary add-annotation">
                             <i class="fa fa-plus"></i> Add an annotation
                         </button>
+                        {{if is_creator:}}
+                        <button class="btn btn-primary update-sequence">
+                            <i class="fa fa-magic"></i> Update Sequence
+                        </button>
+                        {{pass}}
                         <div class="annotation-form-wrapper" style="display: none;">
                             {{=annotation_form}}
                         </div>
-                        <button class="btn btn-primary update_sequence">
-                            <i class="fa fa-plus"></i> Update Sequence
-                        </button>
-                        <div class="annotation-form-wrapper" style="display: none;">
-                            <ul class="btn-group">
+                        <div class="sequence-form-wrapper" style="display: none; margin-top: 20px;">
+                            <button class="btn btn-primary active add-sequence">Add</button>
+                            <button class="btn btn-primary modify-sequence">Modify</button>
+                            <button class="btn btn-primary delete-sequence">Delete</button>
+                            {{=update_sequence_form}}
                         </div>
                     </div>
 
@@ -192,11 +197,72 @@
                     'border-top-left-radius': '10px'
                 })
 
-                // make upload drop down
+                // dropdowns
+                function hideOtherForm($obj) {
+                    var otherform = $obj.siblings('div');
+                    if (otherform.css("display") !== 'none') {
+                        otherform.hide({
+                            duration: 300
+                        });
+                    }
+                }
                 $("button.add-annotation").click(function() {
-                    $(".annotation-form-wrapper").toggle({
+                    var theForm = $(".annotation-form-wrapper");
+                    hideOtherForm(theForm);
+                    theForm.toggle({
                         duration: 1000
                     })
+                });
+                $("button.update-sequence").click(function() {
+                    var theForm = $(".sequence-form-wrapper");
+                    hideOtherForm(theForm);
+                    theForm.toggle({
+                        duration: 600
+                    })
+                })
+
+                // update sequence buttons
+
+                /*** Hide form action ***/
+                $('#no_table_form_action__row').hide();
+
+                function updateActive($obj) {
+                    $obj.siblings('button').removeClass('active');
+                    $obj.addClass('active')
+                }
+                function updateFormAction($form, action) {
+                    // update action
+                    $form.find('#no_table_form_action').val(action);
+                    // conditionally hide seqs field
+                    if (action === 'del') {
+                        $form.find('#no_table_seqs__row').hide();
+                    }
+                    else {
+                        $form.find('#no_table_seqs__row').show();
+                    }
+                }
+                $('button.add-sequence').click(function() {
+                    updateActive($(this));
+                    // change text
+                    var form = $(this).siblings('form');
+                    form.find('#no_table_seqs__label').text('Additional sequence to add');
+                    form.find('#no_table_position__label').text('Position(s) to insert sequence');
+                    updateFormAction(form, 'add');
+                });
+                $('button.modify-sequence').click(function() {
+                    updateActive($(this));
+                    // change text
+                    var form = $(this).siblings('form');
+                    form.find('#no_table_seqs__label').text('Replacement sequence');
+                    form.find('#no_table_position__label').text('Position(s) to replace with above sequence');
+                    updateFormAction(form, 'replace');
+                });
+                $('button.delete-sequence').click(function() {
+                    updateActive($(this));
+                    // change text
+                    var form = $(this).siblings('form');
+                    form.find('#no_table_position__label').text('Position(s) to delete');
+                    updateFormAction(form, 'del');
                 })
             })
         </script>
