@@ -1,9 +1,26 @@
 {{extend 'layout.html'}}
 
 {{if found_sequence:}}
-    <h1>{{=desc_name}} <small>by {{=desc_author}} on {{if date_created is not None:}}{{=date_created.strftime("%m/%d/%y")}}{{pass}}</small></h1>
+    <h1 style="display: inline-block;">{{=desc_name}} <small>by {{=desc_author}} on {{if date_created is not None:}}{{=date_created.strftime("%m/%d/%y")}}{{pass}}</small></h1>
 
     {{if authorized:}}
+
+        <div class="btn-group pull-right" style="margin-top: 21px;">
+            <button class="btn btn-primary dropdown-toggle" data-toggle="dropdown">
+                <i class="fa fa-gear"></i>
+            </button>
+            <ul class="dropdown-menu">
+                {{if is_creator:}}
+                <li>
+                    <a href="#">Delete</a>
+                </li>
+                {{elif is_subscriptor:}}
+                <li>
+                    <a href="#">Unsubscribe</a>
+                </li>
+                {{pass}}
+            </ul>
+        </div>
 
         <div class="row">
             <div class="col-md-9 col-xs-12 left-panel">

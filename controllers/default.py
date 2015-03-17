@@ -137,7 +137,7 @@ def view():
    annotationList = sequence_row = seq = seq_type = desc_name = \
        desc_description = date_created = desc_author = list_of_subscriptors = \
        seq_length = annotation_list = plasmid_name = user_chosen = \
-       selected_user_id = annotation_form = None
+       selected_user_id = annotation_form = is_subscriptor = is_creator = None
    found_sequence = False
    
    desc_id = request.args(0) or None
