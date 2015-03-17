@@ -109,7 +109,7 @@ def insert_annotation(form):
    descriptor_id = db(db.descriptor_table.sequence_name == form.vars.seq_name).select().first().id
    update_annotation_to_descriptor(annotation_id, descriptor_id)
    annotation_name = form.vars.annotation_name
-   # update_active_annotations(annotation_id,annotation_name , descriptor_id)
+   update_active_annotations(annotation_id,annotation_name , descriptor_id)
    return descriptor_id
 
 def update_annotation_to_descriptor(annotation_id, descriptor_id):
